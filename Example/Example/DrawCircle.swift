@@ -40,7 +40,8 @@ struct DrawCircle: MetalBuildingBlock {
     
     var metalContent: MetalContent{
         CPUCompute{_ in
-            circleBuffer.pointer![0] = .init(coord: touchCoord/100)
+            let coord: simd_float2 = [touchCoord.x, -touchCoord.y] / 100
+            circleBuffer.pointer![0] = .init(coord: coord)
             print(touchCoord)
         }
         Render(vertex: "circleVertexShader", fragment: "circleFragmentShader", type: .point, count: 1)

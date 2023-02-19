@@ -143,7 +143,7 @@ struct ContentView: View {
                             
                             drawCircle = r.contains(coord1.x) && r.contains(coord1.y) && drawMode == .texture
                             if drawCircle{
-                                coordTransformed = [coord1.x, -coord1.y]
+                                coordTransformed = [coord1.x, coord1.y]
                             }else{
                                 if r.contains(coord1.x) && r.contains(coord1.y){
                                         spawnParticle(coord: [coord1.x, coord1.y],
@@ -154,7 +154,7 @@ struct ContentView: View {
                             drawCircle = false
                         }
                     }
-                   /*EncodeGroup(active: $transform.isTouching){
+                   EncodeGroup(active: $transform.isTouching){
                         TouchParticle(context: context,
                                       particlesBuffer: particlesBuffer,
                                       touchCoord: $coordTransformed,
@@ -171,7 +171,7 @@ struct ContentView: View {
                             print("particle touched:", touchedId)
                             particlesBuffer.pointer![touchedId].color = [1,1,1]
                         }
-                    }*/
+                    }
                     Render(type: .point, count: particlesCount)
                         .vertexBuf(particlesBuffer, name: "particles")
                         .vertexBytes($transform.matrix, type: "float3x3", name: "transform")

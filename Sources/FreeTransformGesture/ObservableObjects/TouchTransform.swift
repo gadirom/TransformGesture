@@ -116,13 +116,13 @@ public class TouchTransform: ObservableObject{
         isTouching = false
     }
     
-    func updateMatrix(centerTranslation: CGSize){
+    func updateMatrix(){
         matrix = resulting.matrix(centerTranslation: centerTranslation)
         matrixInveresed = matrix.inverse
     }
     
     func updatePublishedTransformValues(){
-        updateMatrix(centerTranslation: centerTranslation)
+        updateMatrix()
         
         translation = resulting.translation
         scale = resulting.scale
@@ -142,9 +142,12 @@ public class TouchTransform: ObservableObject{
     var centerTranslation: CGSize = .zero
     
     func setFrameSize(_ size: CGSize){
-        centerTranslation = size * 0.5
-        DispatchQueue.main.async {
-            self.updateMatrix(centerTranslation: self.centerTranslation)
+        let newCenterTranslation: CGSize = size * 0.5
+        if newCenterTranslation != centerTranslation{
+            DispatchQueue.main.async {
+                self.centerTranslation = size * 0.5
+                self.updateMatrix()
+            }
         }
     }
     
