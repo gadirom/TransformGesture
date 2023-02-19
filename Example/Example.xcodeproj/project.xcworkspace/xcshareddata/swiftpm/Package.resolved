@@ -1,0 +1,32 @@
+{
+  "pins" : [
+    {
+      "identity" : "cgmath",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/gadirom/CGMath",
+      "state" : {
+        "revision" : "ed3125a2d6d9a98f4a7d58a4f79fc9c159498650",
+        "version" : "1.0.4"
+      }
+    },
+    {
+      "identity" : "metalbuilder",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/gadirom/MetalBuilder",
+      "state" : {
+        "revision" : "b3859358bf388f35ebd19d5f04e87c8b5ab85fb6",
+        "version" : "0.2.2"
+      }
+    },
+    {
+      "identity" : "swift-collections",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-collections",
+      "state" : {
+        "revision" : "937e904258d22af6e447a0b72c0bc67583ef64a2",
+        "version" : "1.0.4"
+      }
+    }
+  ],
+  "version" : 2
+}
