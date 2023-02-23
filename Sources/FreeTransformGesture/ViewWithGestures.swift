@@ -10,8 +10,10 @@ import SwiftUI
 struct ViewWithGestures: UIViewRepresentable {
     
     let transform: TouchTransform
-    var transformMode: TransformMode
+    var draggingDisabled: Bool
+    var transformDisabled: Bool
     var frameSize: CGSize
+    var touchDelegate: TouchDelegate?
     var onTap: (CGPoint)->()
     
     func makeCoordinator() -> Coordinator {
@@ -21,13 +23,17 @@ struct ViewWithGestures: UIViewRepresentable {
     
     func makeUIView(context: UIViewRepresentableContext<Self>) -> UIViewWithGestures {
         let uiView = UIViewWithGestures(touchTransform: transform,
-                                        transformMode: transformMode,
+                                        draggingDisabled: draggingDisabled,
+                                        transformDisabled: transformDisabled,
                                         onTap: onTap)
-        uiView.transformMode = transformMode
+        uiView.draggingDisabled = draggingDisabled
+        uiView.transformDisabled = transformDisabled
+        uiView.touchDelegate = touchDelegate
         return uiView
     }
     func updateUIView(_ uiView: UIViewWithGestures, context: UIViewRepresentableContext<Self>) {
-        uiView.transformMode = transformMode
+        uiView.draggingDisabled = draggingDisabled
+        uiView.transformDisabled = transformDisabled
         uiView.setFrameSize(frameSize)
     }
 }

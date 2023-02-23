@@ -2,6 +2,9 @@ import SwiftUI
 import MetalKit
 
 public extension matrix_float3x3{
+    static var identity: Self{
+        matrix_float3x3(diagonal: [1,1,1])
+    }
     mutating func translate(_ d: simd_float2){
         var transform = matrix_identity_float3x3
         transform[0,2] = d.x
@@ -61,12 +64,6 @@ public extension ClosedRange{
     func clamp(value: Self.Bound) -> (Self.Bound, Bool){
         let clampedValue = Swift.max(self.lowerBound, Swift.min(self.upperBound, value))
         return (clampedValue, value != clampedValue)
-    }
-}
-
-public extension matrix_float3x3{
-    static var identity: Self{
-        matrix_float3x3(diagonal: [1,1,1])
     }
 }
 

@@ -4,7 +4,7 @@ import MetalKit
 import MetalPerformanceShaders
 import FreeTransformGesture
 
-struct Particle: TouchableParticle{
+struct Particle: TouchableParticle, RenderableParticle{
     var coord: simd_float2 = [0, 0]
     var size: Float = 0
     var color: simd_float3 = [0, 0, 0]
@@ -15,55 +15,51 @@ struct QuadVertex: MetalStruct{
     var uv: simd_float2 = [0, 0]
 }
 
-var uniformsDesc: UniformsDescriptor{
-    var desc = UniformsDescriptor()
-    DrawCircle.addUniforms(&desc)
-    return desc
-        .float("size", range: 0...100, value: 100)
-        .float("bright", range: 0...5, value: 2.7)
-}
-
 let particlesCount = 3000
 
+var uniformsDesc: UniformsDescriptor{
+    UniformsDescriptor()
+        .float("size", range: 0...5, value: 5)
+}
+
+//Canvas size
+var canvasSize: simd_float2 = [200, 300]
+//Canvas edge coords
+var canvasD: simd_float2{
+    canvasSize/2
+}
+
+var canvasTextureScaleFactor: Float = 5
+
 let textureDesc = TextureDescriptor()
-    .fixedSize(.init(width: 1000, height: 1000))
+    .fixedSize(.init(width: Int(canvasSize.x*canvasTextureScaleFactor),
+                     height: Int(canvasSize.y*canvasTextureScaleFactor)))
     .pixelFormat(.rgba16Float)
 
 enum DrawMode: String, Equatable, CaseIterable  {
-    case texture, particle
+    case texture, particle, edit
     
     var localizedName: LocalizedStringKey { LocalizedStringKey(rawValue) }
 }
 
 struct ContentView: View {
     
+    let touchDelegate = MyTouchDelegate()
+    
     var viewSettings: MetalBuilderViewSettings{
         MetalBuilderViewSettings(framebufferOnly: false,
                                  preferredFramesPerSecond: 60)
     }
-
-    var pipColorDesc: MTLRenderPipelineColorAttachmentDescriptor{
-        let desc = MTLRenderPipelineColorAttachmentDescriptor()
-        desc.isBlendingEnabled = true
-        desc.rgbBlendOperation = .add
-        desc.alphaBlendOperation = .add
-        desc.sourceRGBBlendFactor = .sourceAlpha
-        desc.sourceAlphaBlendFactor = .one
-        desc.destinationRGBBlendFactor = .one
-        desc.destinationAlphaBlendFactor = .one
-        return desc
-    }
     
     @MetalState var particlesCountState = particlesCount
-    
-    @Environment(\.scenePhase) var scenePhase
+    @MetalState var canvasSizeState = canvasSize
     
     @ObservedObject var transform = TouchTransform(
         translation: CGSize(width: 0,
                             height:0),
         scale: 1,
         rotation: 0,
-        scaleRange: 0.1...200,
+        scaleRange: 0.1...20,
 //        rotationRange: -CGFloat.pi...CGFloat.pi,
 //        translationRangeX: -500...500,
 //        translationRangeY: -500...500,
@@ -73,11 +69,12 @@ struct ContentView: View {
         rotationSnapDistance: .pi/60,
         scaleSnapDistance: 0.1
     )
-    
-    let hapticsEngine = HapticsEngine()
 
     @State var drawMode: DrawMode = .texture
     @State var transformActive = false
+    
+    @State var disableDragging = false
+    @State var disableTransform = false
     
     @MetalState var tapped: CGPoint? = nil
     
@@ -88,10 +85,9 @@ struct ContentView: View {
     @MetalState var oneParticleIsTouched = false
     
     @MetalState var touchedId = 0
+    @MetalState var testTouch = false
     
     @MetalBuffer<Particle>(count: particlesCount) var particlesBuffer
-    
-    @MetalBuffer<QuadVertex>(count: 6, metalName: "quadBuffer") var quadBuffer
     
     @MetalTexture(textureDesc) var drawTexture
     
@@ -99,6 +95,10 @@ struct ContentView: View {
     
     @MetalState var dragging = false
     @MetalState var coordTransformed: simd_float2 = [0, 0]
+    @MetalState var drawingCircleSize: Float = 0
+    @State var circleSize: CGFloat = 0
+    
+    @MetalState var touchedParticleInitialCoords: simd_float2 = [0, 0]
     
     @MetalUniforms(uniformsDesc) var uniforms
     
@@ -106,55 +106,72 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack{
                 Rectangle()
-                    .fill(Color.indigo)
-                    .frame(width: 200, height: 200)
+                    .fill(Color.gray)
+                    .frame(width: CGFloat(canvasSize.x), height: CGFloat(canvasSize.y))
                     .transformEffect(transform)
                 MetalBuilderView(viewSettings: viewSettings) { context in
                     EncodeGroup(active: $justStarted){
                         ClearRender()
                             .texture(drawTexture)
-                            .color(.black)
+                            .color(MTLClearColor())
                     }
-                    CPUCompute{_ in
-                        justStarted = false
-                        
-                        if transform.isTouching{
-                            var matrix = transform.matrix
-                            matrix = matrix.inverse
-                            let coord = transform.floatCurrentTouch
-                            let coord1: simd_float3 = [coord.x, coord.y, 1]*matrix
-                            coordTransformed = [coord1.x, coord1.y]
+                    CPUCompute{ device in
+                        if justStarted{
+                            uniforms.setup(device: device)
+                            justStarted = false
                         }
                         
+                        var coord: simd_float2
+                        //prepare to check if a particle is touched
+                        if transform.isTouching &&
+                            !transform.isDragging &&
+                            !dragging &&
+                            !transform.isTransforming {
+                            
+                            testTouch = true
+                            coord = transform.floatFirstTouch
+                            
+                            //print("firstTouch")
+                        }else{
+                            testTouch = false
+                            coord = transform.floatCurrentTouch
+                        }
                         
+                        if let tapped = tapped{
+                            coord = tapped.simd_float2
+                        }
+                        
+                        //prepare transformed coordinates
+                        let coord1: simd_float3 = [coord.x, coord.y, 1]*transform.matrixInveresed
+                        let rx: ClosedRange<Float> = -canvasD.x...canvasD.x
+                        let ry: ClosedRange<Float> = -canvasD.y...canvasD.y
+                        
+                        let coordInside = rx.contains(coord1.x) && ry.contains(coord1.y)
+                        guard coordInside else {
+                            return
+                        }
+                        coordTransformed = [coord1.x, coord1.y]
+                        
+                        //prepare to draw
                         if !oneParticleIsTouched &&
                             (transform.isDragging || tapped != nil){
-                            var matrix = transform.matrix
-                            matrix = matrix.inverse
-                            let coord: simd_float2
-                            if let tapped = tapped{
-                                coord = tapped.simd_float2
-                                self.tapped = nil
-                            }else{
-                                coord = transform.floatCurrentTouch
-                            }
-                            let coord1: simd_float3 = [coord.x, coord.y, 1]*matrix
-                            let r: ClosedRange<Float> = -100...100
                             
-                            drawCircle = r.contains(coord1.x) && r.contains(coord1.y) && drawMode == .texture
-                            if drawCircle{
-                                coordTransformed = [coord1.x, coord1.y]
-                            }else{
-                                if r.contains(coord1.x) && r.contains(coord1.y){
-                                        spawnParticle(coord: [coord1.x, coord1.y],
-                                                      size: uniforms.getFloat("size")!)
-                                }
+                            switch drawMode {
+                            case .texture:
+                                drawingCircleSize = uniforms.getFloat("size")! * canvasTextureScaleFactor
+                                drawCircle = true
+                            case .particle:
+                                spawnParticle(coord: [coord1.x, coord1.y],
+                                              size: uniforms.getFloat("size")!)
+                            case .edit: break
                             }
                         }else{
                             drawCircle = false
                         }
+                        
+                        self.tapped = nil
                     }
-                   EncodeGroup(active: $transform.isTouching){
+                   EncodeGroup(active: $testTouch){
                         TouchParticle(context: context,
                                       particlesBuffer: particlesBuffer,
                                       touchCoord: $coordTransformed,
@@ -163,109 +180,64 @@ struct ContentView: View {
                                       isTouched: $oneParticleIsTouched)
                     }
                     CPUCompute{ _ in
-                        if !transform.isTouching {
+                        if !transform.isTouching || drawCircle{
                             oneParticleIsTouched = false
+                            dragging = false
+                            if drawMode == .edit{
+                                disableDragging = true
+                            }
                             return
                         }
                         if oneParticleIsTouched{
-                            print("particle touched:", touchedId)
-                            particlesBuffer.pointer![touchedId].color = [1,1,1]
+                            if drawMode == .edit{
+                                disableDragging = false
+                            }
+                            circleSize = CGFloat(particlesBuffer.pointer![touchedId].size)
+                            if dragging{
+                                let o = transform.floatCurrentTouch
+                                let o1 = [o.x, o.y, 1]*transform.matrixInveresed
+                                particlesBuffer.pointer![touchedId].coord = [o1.x, o1.y]
+                                //print("offset:", o1)
+                            }else{
+                                touchedParticleInitialCoords = particlesBuffer.pointer![touchedId].coord
+                                dragging = true
+                                testTouch = false
+                            }
+                            
+                        }else{
+                            circleSize = CGFloat(uniforms.getFloat("size")!)
                         }
                     }
-                    Render(type: .point, count: particlesCount)
-                        .vertexBuf(particlesBuffer, name: "particles")
-                        .vertexBytes($transform.matrix, type: "float3x3", name: "transform")
-                        .vertexBytes(context.$viewportToDeviceTransform)
-                        .vertexBytes($transform.floatScale, type: "float", name: "scale")
-                        .uniforms(uniforms, name: "u")
-                        .pipelineColorAttachment(pipColorDesc)
-                        .colorAttachement(
-                            loadAction: .clear,
-                            clearColor: .clear)
-                        .vertexShader(VertexShader("vertexShader", vertexOut:"""
-                        struct VertexOut{
-                            float4 position [[position]];
-                            float size [[point_size]];
-                            float3 color;
-                        };
-                        """, body:"""
-                          VertexOut out;
-                          Particle p = particles[vertex_id];
-                          float3 pos = float3(p.coord.xy, 1);
-                          pos *= transform;
-                    
-                          pos *= viewportToDeviceTransform;
-                    
-                          out.position = float4(pos.xy, 0, 1);
-                          out.size = p.size*scale;
-                          out.color = p.color*u.bright;
-                          return out;
-                    """))
-                        .fragmentShader(FragmentShader("fragmentShader",
-                                                       source:
-                    """
-                        fragment float4 fragmentShader(VertexOut in [[stage_in]],
-                                                       float2 p [[point_coord]]){
-                            float mask = smoothstep(.5, .45, length(p-.5));
-                            if (mask==0) discard_fragment();
-                            return float4((in.color+.5)*pow((0.5-length(p-.5))*2.,.5), mask);
-                        }
-                    """))
+                    RenderParticles(context: context,
+                                    particlesBuffer: particlesBuffer,
+                                    transform: transform)
                     EncodeGroup(active: $drawCircle){
                         DrawCircle(context: context,
                                    texture: drawTexture,
                                    touchCoord: $coordTransformed,
-                                   uniforms: uniforms)
+                                   circleSize: $drawingCircleSize,
+                                   canvasSize: $canvasSizeState)
                     }
                     
-                    Render(type: .triangle, count: 6)
-                        .vertexBuf(quadBuffer)
-                        .fragTexture(drawTexture, argument: .init(type: "float", access: "sample", name: "inTexture"))
-                        .vertexBytes($transform.matrix, type: "float3x3", name: "transform")
-                        .vertexBytes(context.$viewportToDeviceTransform)
-                        //.uniforms(uniforms, name: "u")
-                        .pipelineColorAttachment(pipColorDesc)
-                        .colorAttachement(
-                            loadAction: .load,
-                            clearColor: .clear)
-                        .vertexShader(VertexShader("quadVertexShader", vertexOut:"""
-                        struct QuadVertexOut{
-                            float4 position [[position]];
-                            float2 uv;
-                        };
-                        """, body:"""
-                          QuadVertexOut out;
-                          QuadVertex p = quadBuffer[vertex_id];
-                          float3 pos = float3(p.coord.xy, 1);
-                          pos *= transform;
-                          pos *= viewportToDeviceTransform;
-                    
-                          out.position = float4(pos.xy, 0, 1);
-                          out.uv = p.uv;
-                          return out;
-                    """))
-                        .fragmentShader(FragmentShader("quadFragmentShader",
-                                                       returns: "float4",
-                                                       body:
-                    """
-                        constexpr sampler s(address::clamp_to_border, filter::linear,  border_color::opaque_white);
-                        float mask = inTexture.sample(s, in.uv).r;
-                        return float4(float3(1), 0.5*mask);
-                    """))
+                    QuadRenderer(context: context,
+                                 toTexture: nil,
+                                 sampleTexture: drawTexture,
+                                 transformMatrix: $transform.matrix)
                         
                 }
-                .onResize{ size in
-                    createQuad()
-                }
                 .freeTransformGesture(transform: transform,
-                                      transformMode: .auto,
+                                      draggingDisabled: disableDragging,
+                                      transformDisabled: disableTransform,
+                                      touchDelegate: touchDelegate,
                                       active: true){
-                    tapped = $0
+                    if !oneParticleIsTouched && drawMode != .edit{
+                        tapped = $0
+                    }
                 }
-                if transform.isTouching{
+                if transform.isTouching && drawMode != .edit && !disableDragging{
                     Circle()
                         .stroke(transform.isDragging ? Color.white : Color.gray)
-                        .frame(width: 100, height: 100)
+                        .frame(width: transform.scale*circleSize)
                         .position(transform.firstTouch)
                         .offset(transform.offset)
                 }
@@ -273,7 +245,7 @@ struct ContentView: View {
                     Rectangle()
                         .fill(Color.clear)
                         .border(Color.white, width: transform.scaleSnapped ? 2 : 1)
-                        .frame(width: 200, height: 200)
+                        .frame(width: CGFloat(canvasSize.x), height: CGFloat(canvasSize.y))
                         .transformEffect(transform)
                     let offset = CGSize(width: transform.centerPoint.x,
                                         height: transform.centerPoint.y)
@@ -301,23 +273,7 @@ struct ContentView: View {
                     }
                 }
             }
-            .onChange(of: transform.translationXSnapped) { newValue in
-                hapticsEngine.onSnap()
-            }
-            .onChange(of: transform.translationYSnapped) { newValue in
-                hapticsEngine.onSnap()
-            }
-            .onChange(of: transform.rotationSnapped) { newValue in
-                hapticsEngine.onSnap()
-            }
-            .onChange(of: transform.scaleSnapped) { newValue in
-                hapticsEngine.onSnap()
-            }
-            .onChange(of: scenePhase) { newValue in
-                if newValue == .active{
-                    hapticsEngine.start()
-                }
-            }
+            .hapticsEffects(transform)
             VStack{
                 HStack{
                     Picker("", selection: $drawMode) {
@@ -326,31 +282,39 @@ struct ContentView: View {
                                 .tag(value)
                         }
                     }.pickerStyle(.segmented)
+                        .onChange(of: drawMode) { newValue in
+                            if newValue != .edit{
+                                disableDragging = false
+                            }
+                        }
                     Button {
                         clearCanvas()
                         justStarted = true
                     } label: {
                         Text("clear")
                     }
+                    Button {
+                        transform.reset()
+                    } label: {
+                        Text("reset")
+                    }
 
                 }
                 UniformsView(uniforms)
                     .frame(height: 120)
+                Toggle("Dragging/Drawing Disabled:", isOn: $disableDragging)
+                    .disabled(true)
+                Toggle("Disable Transforming:", isOn: $disableTransform)
             }
             .padding([.top, .bottom])
             .background(Color.black)
         }
     }
-    func createQuad(){
-        let p = quadBuffer.pointer!
-        p[0] = .init(coord: [-100, -100], uv: [0,0])
-        p[1] = .init(coord: [100, -100], uv: [1,0])
-        p[2] = .init(coord: [100, 100], uv: [1,1])
-        
-        p[3] = .init(coord: [-100, 100], uv: [0,1])
-        p[4] = .init(coord: [-100, -100], uv: [0,0])
-        p[5] = .init(coord: [100, 100], uv: [1,1])
+
+    func checkForPoint(point: CGPoint) -> Bool{
+        true
     }
+    
     func clearCanvas(){
         particleId = 0
         for _ in 0..<particlesCount{
@@ -360,8 +324,9 @@ struct ContentView: View {
         }
     }
     func spawnParticle(coord: simd_float2, size: Float? = nil){
+        //print(coord)
         let size = size ?? Float.random(in: 0.03...0.05)
-        let color = simd_float3.random(in: 0.1...0.2)
+        let color = simd_float3.random(in: 0.1...1)
         let p = Particle(coord: [coord.x, coord.y],
                          size: size,
                          color: color)

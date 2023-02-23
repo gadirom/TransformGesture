@@ -2,12 +2,8 @@
 import MetalBuilder
 import MetalKit
 
+// Building block for drawing a circle on a texture
 struct DrawCircle: MetalBuildingBlock {
-    
-    static func addUniforms(_ desc: inout UniformsDescriptor){
-        desc = desc
-            .float("circleSize", range: 0...100, value: 10)
-    }
     
     struct CircleStruct: MetalStruct{
         var coord: simd_float2 = [0, 0]
@@ -34,19 +30,19 @@ struct DrawCircle: MetalBuildingBlock {
     let texture: MTLTextureContainer
     
     @MetalBinding var touchCoord: simd_float2
-    var uniforms: UniformsContainer
+    @MetalBinding var circleSize: Float
+    @MetalBinding var canvasSize: simd_float2
     
     @MetalBuffer<CircleStruct>(count: 1, metalName: "circles") var circleBuffer
     
     var metalContent: MetalContent{
         CPUCompute{_ in
-            let coord: simd_float2 = [touchCoord.x, -touchCoord.y] / 100
+            let coord: simd_float2 = [touchCoord.x, -touchCoord.y] / canvasSize * 2
             circleBuffer.pointer![0] = .init(coord: coord)
-            print(touchCoord)
         }
         Render(vertex: "circleVertexShader", fragment: "circleFragmentShader", type: .point, count: 1)
             .vertexBuf(circleBuffer)
-            .uniforms(uniforms, name: "u")
+            .vertexBytes($circleSize, name: "size")
             .pipelineColorAttachment(self.pipColorDesc)
             .colorAttachement(
                 texture: texture,
@@ -61,7 +57,7 @@ struct DrawCircle: MetalBuildingBlock {
             """, body:"""
               CircleVertexOut out;
               out.position = float4(circles[vertex_id].coord, 0, 1);
-              out.size = u.circleSize;
+              out.size = size;
               out.color = 1;
               return out;
         """))
@@ -72,7 +68,7 @@ struct DrawCircle: MetalBuildingBlock {
                                            float2 p [[point_coord]]){
                 float mask = smoothstep(.5, .45, length(p-.5));
                 if (mask==0) discard_fragment();
-                return float4((in.color+.5)*pow((0.5-length(p-.5))*2.,.5), mask);
+                return float4(in.color, mask*0.5);
             }
         """))
     }

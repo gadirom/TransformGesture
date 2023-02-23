@@ -1,0 +1,81 @@
+
+import MetalBuilder
+import MetalKit
+import FreeTransformGesture
+import SwiftUI
+
+protocol RenderableParticle{
+    var coord: simd_float2 { get }
+    var size: Float { get }
+    var color: simd_float3 { get }
+}
+
+// Building block for drawing a circle on a texture
+struct RenderParticles<T: RenderableParticle>: MetalBuildingBlock {
+    
+    var pipColorDesc: MTLRenderPipelineColorAttachmentDescriptor{
+        let desc = MTLRenderPipelineColorAttachmentDescriptor()
+        desc.isBlendingEnabled = true
+        desc.rgbBlendOperation = .add
+        desc.alphaBlendOperation = .add
+        desc.sourceRGBBlendFactor = .sourceAlpha
+        desc.sourceAlphaBlendFactor = .one
+        desc.destinationRGBBlendFactor = .one
+        desc.destinationAlphaBlendFactor = .one
+        return desc
+    }
+    
+    var context: MetalBuilderRenderingContext
+    var helpers = ""
+    var librarySource = ""
+    var compileOptions: MetalBuilderCompileOptions? = nil
+    
+    let particlesBuffer: MTLBufferContainer<T>
+    let toTexture: MTLTextureContainer? = nil
+    
+    @ObservedObject var transform: TouchTransform
+    
+    var metalContent: MetalContent{
+        Render(type: .point, count: particlesCount)
+            .toTexture(toTexture)
+            .vertexBuf(particlesBuffer, name: "particles")
+            .vertexBytes($transform.matrix, type: "float3x3", name: "transform")
+            .vertexBytes(context.$viewportToDeviceTransform)
+            .vertexBytes($transform.floatScale, type: "float", name: "scale")
+            .vertexBytes(context.$scaleFactor)
+            .pipelineColorAttachment(pipColorDesc)
+            .colorAttachement(
+                loadAction: .clear,
+                clearColor: .clear)
+            .vertexShader(VertexShader("vertexShader", vertexOut:"""
+            struct VertexOut{
+                float4 position [[position]];
+                float size [[point_size]];
+                float3 color;
+            };
+            """, body:"""
+              VertexOut out;
+              Particle p = particles[vertex_id];
+              float3 pos = float3(p.coord.xy, 1);
+              pos *= transform;
+        
+              pos *= viewportToDeviceTransform;
+        
+              out.position = float4(pos.xy, 0, 1);
+              out.size = p.size*scale*scaleFactor;
+              out.color = p.color;
+              return out;
+        """))
+            .fragmentShader(FragmentShader("fragmentShader",
+                                           source:
+        """
+            fragment float4 fragmentShader(VertexOut in [[stage_in]],
+                                           float2 p [[point_coord]]){
+                float mask = smoothstep(.5, .45, length(p-.5));
+                if (mask==0) discard_fragment();
+                float3 color = float3((in.color)*pow(mask,1.));
+                return float4(color, mask);
+            }
+        """))
+    }
+}

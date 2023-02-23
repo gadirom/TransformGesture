@@ -4,15 +4,11 @@ import MetalKit
 
 protocol TouchableParticle: MetalStruct{
     var coord: simd_float2 { get }
-    var size: Float { get }
+    var size: Float { get set }
 }
 
+// Building block that contains a compute function for hit testing
 struct TouchParticle<T: TouchableParticle>: MetalBuildingBlock {
-    
-    static func addUniforms(_ desc: inout UniformsDescriptor){
-        desc = desc
-            .float("circleSize", range: 0...100, value: 10)
-    }
     
     var context: MetalBuilderRenderingContext
     var helpers = ""
@@ -20,7 +16,6 @@ struct TouchParticle<T: TouchableParticle>: MetalBuildingBlock {
     var compileOptions: MetalBuilderCompileOptions? = nil
     
     var particlesBuffer: MTLBufferContainer<T>
-    //var touchedParticlesBuffer: MTLBufferContainer<UInt32>
     
     @MetalBinding var touchCoord: simd_float2
     @MetalBinding var particlesCount: Int
@@ -34,7 +29,6 @@ struct TouchParticle<T: TouchableParticle>: MetalBuildingBlock {
     var metalContent: MetalContent{
         Compute("integration")
              .buffer(particlesBuffer, name: "particles", fitThreads: true)
-             //.buffer(touchedParticlesBuffer, space: "device", name: "touched")
              .buffer(counterBuffer, space: "device")
              .bytes($particlesCount, name: "count")
              .bytes($touchCoord, name: "touch")
@@ -42,7 +36,7 @@ struct TouchParticle<T: TouchableParticle>: MetalBuildingBlock {
              kernel void integration(uint id [[thread_position_in_grid]]){
                  if(id>=count) return;
                 auto p = particles[id];
-                if(length(p.coord-touch)<p.size){
+                if(length(p.coord-touch)<p.size*.5){
                     atomic_store_explicit(&counter[0], id, memory_order_relaxed);
                     atomic_store_explicit(&counter[1], 1, memory_order_relaxed);
                     //touched[currentId] = id;
@@ -50,10 +44,13 @@ struct TouchParticle<T: TouchableParticle>: MetalBuildingBlock {
              }
              """)
         CPUCompute{_ in
-            touchedId = Int(counterBuffer.pointer![0])
-            isTouched = Int(counterBuffer.pointer![0]) == 1
-            counterBuffer.pointer![0] = 0
-            counterBuffer.pointer![1] = 0
+            if counterBuffer.pointer![1] == 1{
+                print("touched!: ", counterBuffer.pointer![0])
+                touchedId = Int(counterBuffer.pointer![0])
+                isTouched = Int(counterBuffer.pointer![1]) == 1
+                counterBuffer.pointer![0] = 0
+                counterBuffer.pointer![1] = 0
+            }
         }
     }
 }

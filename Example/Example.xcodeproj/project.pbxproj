@@ -12,6 +12,9 @@
 		005F98B029A1E579001E573C /* HapticsEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 005F98AF29A1E579001E573C /* HapticsEngine.swift */; };
 		005F98B329A1E64B001E573C /* FreeTransformGesture in Frameworks */ = {isa = PBXBuildFile; productRef = 005F98B229A1E64B001E573C /* FreeTransformGesture */; };
 		005F98B529A1EE9E001E573C /* TouchParticle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 005F98B429A1EE9E001E573C /* TouchParticle.swift */; };
+		005F98B729A2A0C6001E573C /* QuadRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 005F98B629A2A0C6001E573C /* QuadRenderer.swift */; };
+		005F98B929A71560001E573C /* MyTouchDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 005F98B829A71560001E573C /* MyTouchDelegate.swift */; };
+		005F98BB29A724C0001E573C /* RenderParticles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 005F98BA29A724C0001E573C /* RenderParticles.swift */; };
 		00BD55A729A1D9A60084DBB1 /* ExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00BD55A629A1D9A60084DBB1 /* ExampleApp.swift */; };
 		00BD55A929A1D9A60084DBB1 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00BD55A829A1D9A60084DBB1 /* ContentView.swift */; };
 		00BD55AB29A1D9A70084DBB1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 00BD55AA29A1D9A70084DBB1 /* Assets.xcassets */; };
@@ -23,6 +26,9 @@
 		005F98AD29A1E553001E573C /* DrawCircle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawCircle.swift; sourceTree = "<group>"; };
 		005F98AF29A1E579001E573C /* HapticsEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticsEngine.swift; sourceTree = "<group>"; };
 		005F98B429A1EE9E001E573C /* TouchParticle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchParticle.swift; sourceTree = "<group>"; };
+		005F98B629A2A0C6001E573C /* QuadRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuadRenderer.swift; sourceTree = "<group>"; };
+		005F98B829A71560001E573C /* MyTouchDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyTouchDelegate.swift; sourceTree = "<group>"; };
+		005F98BA29A724C0001E573C /* RenderParticles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderParticles.swift; sourceTree = "<group>"; };
 		00BD55A329A1D9A60084DBB1 /* Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Example.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		00BD55A629A1D9A60084DBB1 /* ExampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleApp.swift; sourceTree = "<group>"; };
 		00BD55A829A1D9A60084DBB1 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -81,9 +87,12 @@
 			children = (
 				00BD55A629A1D9A60084DBB1 /* ExampleApp.swift */,
 				005F98AD29A1E553001E573C /* DrawCircle.swift */,
+				005F98BA29A724C0001E573C /* RenderParticles.swift */,
 				005F98B429A1EE9E001E573C /* TouchParticle.swift */,
 				005F98AF29A1E579001E573C /* HapticsEngine.swift */,
 				00BD55A829A1D9A60084DBB1 /* ContentView.swift */,
+				005F98B829A71560001E573C /* MyTouchDelegate.swift */,
+				005F98B629A2A0C6001E573C /* QuadRenderer.swift */,
 				00BD55AA29A1D9A70084DBB1 /* Assets.xcassets */,
 				00BD55AC29A1D9A70084DBB1 /* Preview Content */,
 			);
@@ -177,10 +186,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				005F98B029A1E579001E573C /* HapticsEngine.swift in Sources */,
+				005F98B729A2A0C6001E573C /* QuadRenderer.swift in Sources */,
 				005F98AE29A1E553001E573C /* DrawCircle.swift in Sources */,
 				00BD55A929A1D9A60084DBB1 /* ContentView.swift in Sources */,
 				00BD55A729A1D9A60084DBB1 /* ExampleApp.swift in Sources */,
 				005F98B529A1EE9E001E573C /* TouchParticle.swift in Sources */,
+				005F98B929A71560001E573C /* MyTouchDelegate.swift in Sources */,
+				005F98BB29A724C0001E573C /* RenderParticles.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

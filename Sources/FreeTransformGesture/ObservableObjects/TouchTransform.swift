@@ -4,7 +4,24 @@ import MetalKit
 import CGMath
 
 @MainActor
+/// Use this observable object to get touch information from ``freeTransformGesture`` view modifier,
+/// pass it to ``transformEffect`` modifier to accordingly transform your views.
+/// This object should be created with `@ObservedObject` attribute in your view hierarchy.
 public class TouchTransform: ObservableObject{
+    /// Creates an instance of ``TouchTransform``.
+    /// - Parameters:
+    ///   - translation: initial translation.
+    ///   - scale: initial scale.
+    ///   - rotation: initial rotation.
+    ///   - scaleRange: range for scale.
+    ///   - rotationRange: range for rotation.
+    ///   - translationRangeX: range for translation along the X axis.
+    ///   - translationRangeY: range for translation along the Y axis.
+    ///   - translationXSnapDistance: max translational deviation along the X axis for snapping to zero.
+    ///   - translationYSnapDistance: max translational deviation along the Y axis for snapping to zero.
+    ///   - rotationSnapPeriod: period for rotation snapping in radians.
+    ///   - rotationSnapDistance: max rotational deviation for snapping.
+    ///   - scaleSnapDistance: max zooming deviation from 1 for snapping to 1.
     public init(translation: CGSize = .zero,
                 scale: CGFloat = 1,
                 rotation: CGFloat = 0,
@@ -41,11 +58,17 @@ public class TouchTransform: ObservableObject{
     }
     
     //Published Dragging Values
+    
+    /// Indicates whether the view is being touched
     @Published public var isTouching = false
+    /// Indicates whether a dragging gesture is performed inside the view.
     @Published public var isDragging = false
     
+    /// Coordinates of the first touch in the view.
     @Published public var firstTouch: CGPoint = .zero
+    /// Coordinates of the current touch in the view when dragging is performed.
     @Published public var currentTouch: CGPoint = .zero
+    /// Coordinates offset when dragging is performed.
     @Published public var offset: CGSize = .zero
     
     @Published public var floatFirstTouch: simd_float2 = [0,0]
@@ -53,14 +76,20 @@ public class TouchTransform: ObservableObject{
     @Published public var floatOffset: simd_float2 = [0,0]
     
     //Published Transform Values
+    
+    /// Indicates whether a transforming with two fingers is performed inside the view.
     @Published public var isTransforming = false
     
+    /// The current transformation matrix.
     @Published public var matrix = matrix_float3x3()
+    /// The current inverse transformation matrix. Use it to find e.g. canvas coordinates of the touched point in the view.
     @Published public var matrixInveresed = matrix_float3x3()
     
     @Published public var translation: CGSize = .zero
     @Published public var scale: CGFloat = 1
     @Published public var rotation: CGFloat = 0
+    
+    /// The center point between the two fingers that sets the axis for rotation and scaling.
     @Published public var centerPoint: CGPoint = .zero
     
     @Published public var floatTranslation: simd_float2 = [0,0]
@@ -68,16 +97,25 @@ public class TouchTransform: ObservableObject{
     @Published public var floatRotation: Float = 0
     @Published public var floatCenterPoint: simd_float2 = [0,0]
     
+    /// Is `true` if the translation along the X axis is currently out of bounds of ``translationRangeX``.
     @Published public var translationXOutOfBounds = false
+    /// Is `true` if the translation along the Y axis is currently out of bounds ``translationRangeY``.
     @Published public var translationYOutOfBounds = false
+    /// Is `true` if the scaling is currently out of bounds of ``scaleRange``.
     @Published public var scaleOutOfBounds = false
+    /// Is `true` if the rotation is currently out of bounds of ``rotationRange``.
     @Published public var rotationOutOfBounds = false
     
+    /// Is `true` if the translation along the X axis is currently being snapped.
     @Published public var translationXSnapped = false
+    /// Is `true` if the translation along the Y axis is currently being snapped.
     @Published public var translationYSnapped = false
+    /// Is `true` if the scaling is currently being snapped.
     @Published public var scaleSnapped = false
+    /// Is `true` if the rotation is currently being snapped.
     @Published public var rotationSnapped = false
     
+    //Public Properties
     public var translationRangeX: ClosedRange<CGFloat>
     public var translationRangeY: ClosedRange<CGFloat>
     public var scaleRange: ClosedRange<CGFloat>
@@ -89,33 +127,27 @@ public class TouchTransform: ObservableObject{
     public var rotationSnapDistance: CGFloat
     public var rotationSnapPeriod: CGFloat
     
-//    func singleTouch(_ point: CGPoint){
-//        
-//    }
+    //Private properties
+    var current: Transform!
+    var previous = Transform()
+    var resulting = Transform()
     
-    func startSingleTouch(_ touch: CGPoint){
-        firstTouch = touch
-        offset = .zero
-        floatFirstTouch = touch.simd_float2
-        floatOffset = [0,0]
-        
-        isTouching = true
+    var centerTranslation: CGSize = .zero
+}
+
+// Public functions
+public extension TouchTransform{
+    /// Resets transformation to identity.
+    func reset(){
+        resulting = Transform()
+        current = Transform()
+        updatePublishedTransformValues()
+        current = nil
     }
-    
-    func moveSingleTouch(_ touch: CGPoint){
-        currentTouch = touch
-        offset = touch-firstTouch
-        floatCurrentTouch = touch.simd_float2
-        floatOffset = offset.simd_float2
-        
-        isDragging = true
-    }
-    
-    func endSingleTouch(){
-        isDragging = false
-        isTouching = false
-    }
-    
+}
+
+// Helper Functions
+extension TouchTransform{
     func updateMatrix(){
         matrix = resulting.matrix(centerTranslation: centerTranslation)
         matrixInveresed = matrix.inverse
@@ -135,12 +167,6 @@ public class TouchTransform: ObservableObject{
         floatCenterPoint = centerPoint.simd_float2
     }
     
-    var current: Transform!
-    var previous = Transform()
-    var resulting = Transform()
-    
-    var centerTranslation: CGSize = .zero
-    
     func setFrameSize(_ size: CGSize){
         let newCenterTranslation: CGSize = size * 0.5
         if newCenterTranslation != centerTranslation{
@@ -150,13 +176,44 @@ public class TouchTransform: ObservableObject{
             }
         }
     }
-    
     func updateCenterPoint(doubleTouch:  [CGPoint]){
         self.resulting.centerPoint = median(doubleTouch[0], doubleTouch[1])
         - centerTranslation
         
         updatePublishedTransformValues()
     }
+}
+
+//Handle dragging
+extension TouchTransform{
+    func startSingleTouch(_ touch: CGPoint){
+        firstTouch = touch
+        currentTouch = touch
+        offset = .zero
+        floatFirstTouch = touch.simd_float2
+        floatCurrentTouch = floatFirstTouch
+        floatOffset = [0,0]
+        
+        isTouching = true
+    }
+    
+    func moveSingleTouch(_ touch: CGPoint){
+        currentTouch = touch
+        offset = touch-firstTouch
+        floatCurrentTouch = touch.simd_float2
+        floatOffset = offset.simd_float2
+        
+        isDragging = true
+    }
+    
+    func endSingleTouch(){
+        isDragging = false
+        isTouching = false
+    }
+}
+
+// Handle Transform
+extension TouchTransform{
     
     func initTransform(){
         if current==nil{
@@ -168,6 +225,7 @@ public class TouchTransform: ObservableObject{
     func endTransform(){
         current = nil
         isTransforming = false
+        isTouching = false
     }
     
     func updateTransform(prev: [CGPoint], curr: [CGPoint]){
@@ -204,7 +262,6 @@ public class TouchTransform: ObservableObject{
             var angle1 = previous.rotation + current.rotation - angle
             (angle1, rotationOutOfBounds) = rotationRange.clamp(value: angle1)
             current.rotation = angle1 - previous.rotation
-            print(angle, angle1, rotationOutOfBounds)
             
             var newTranslation: CGSize = previous.translation
             

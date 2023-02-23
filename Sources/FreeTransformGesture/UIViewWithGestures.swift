@@ -2,14 +2,29 @@ import MetalKit
 import SwiftUI
 import CGMath
 
-public enum TransformMode{
-    case off, on, auto
-}
-
-public final class UIViewWithGestures: UIView{
+final class UIViewWithGestures: UIView{
     
     let touchTransform: TouchTransform
-    var transformMode: TransformMode
+    var draggingDisabled: Bool
+    {
+        didSet{
+            if oldValue && !draggingDisabled{
+                if transforming{
+                    DispatchQueue.main.async {
+                        if let touch = self.previousTouches.first{
+                            self.transforming = false
+                            self.touchTransform.endTransform()
+                            self.touchTransform.isTouching = true
+                            //self.touchTransform.current = nil
+                            //self.touchTransform.isTransforming = false
+                            self.touchesBeganLogicForSingleTouch(touches: [touch])
+                        }
+                    }
+                }
+            }
+        }
+    }
+    var transformDisabled: Bool
     
     let minimumDrawDistance: CGFloat = 3
     let minimumTransform: CGFloat = 3
@@ -19,22 +34,22 @@ public final class UIViewWithGestures: UIView{
     weak var touchDelegate: TouchDelegate?
     
     var previousTouches: [UITouch] = []
-    
     var previousPoints: [CGPoint] = []
-    
     var previousPoint: CGPoint = CGPoint()
     
     var moved = false
-    
     var dragging = false
     var transforming = false
     
     init(touchTransform: TouchTransform,
-         transformMode: TransformMode,
+         draggingDisabled: Bool,
+         transformDisabled: Bool,
          onTap: @escaping (CGPoint)->()){
         self.touchTransform = touchTransform
-        self.transformMode = transformMode
+        self.draggingDisabled = draggingDisabled
+        self.transformDisabled = transformDisabled
         self.onTap = onTap
+        
         super.init(frame: CGRect())
         
         self.isMultipleTouchEnabled = true
@@ -60,49 +75,59 @@ public final class UIViewWithGestures: UIView{
 //    }
    
     //Began
+    func touchesBeganLogicForTransform(touches: Set<UITouch>){
+        if previousTouches.isEmpty{
+            if touches.count>1{//first doubletouch
+                moved = true
+                let twoTouches = [touches.first!, touches.dropFirst().first!]
+                startTransform(twoTouches)
+                previousTouches = twoTouches
+                //print("touches:", touches)
+                return
+            }else{//first single touch possible transform
+                if let touch = touches.first{//singletouch possible transform
+//                    if draggingDisabled{
+//                        startTransform([touch, touch])
+//                    }
+                    startSingleTouch(touch)
+                    previousTouches.append(touch)
+                    moved = false
+                    return
+                }
+            }
+        }
+        if previousTouches.count == 1 && !dragging{
+            if let touch = touches.first(where: {$0 !== previousTouches.first!}) {
+                moved = true
+                previousTouches.append(touch)
+                //add second finger
+                continueTransform(previousTouches)
+            }
+        }
+    }
+    func touchesBeganLogicForSingleTouch(touches: Set<UITouch>){
+        if previousTouches.isEmpty{//first single touch, no transform
+            if let touch = touches.first{
+                previousTouches.append(touch)
+                startSingleTouch(touch)
+            }
+        }
+    }
+    
     public override func touchesBegan(_ touches: Set<UITouch>,
                                      with event: UIEvent?){
-        
-        if transformMode == .on || transformMode == .auto{
-            if previousTouches.isEmpty{
-                if touches.count>1{//first doubletouch
-                    moved = true
-                    let twoTouches = [touches.first!, touches.dropFirst().first!]
-                    startTransform(twoTouches)
-                    previousTouches = twoTouches
-                    //print("touches:", touches)
-                    return
-                }else{//first single touch possible transform
-                    if let touch = touches.first{//singletouch possible transform
-                        startSingleTouch(touch)
-                        previousTouches.append(touch)
-                        moved = false
-    //                    startTransform([touch, touch])
-                        return
-                    }
-                }
-            }
-            if previousTouches.count == 1 && !dragging{
-                if let touch = touches.first(where: {$0 !== previousTouches.first!}) {
-                    moved = true
-                    previousTouches.append(touch)
-                    //add second finger
-                    continueTransform(previousTouches)
-                }
+        if transformDisabled{
+            if !draggingDisabled{
+                touchesBeganLogicForSingleTouch(touches: touches)
             }
         }else{
-            if previousTouches.isEmpty{//first single touch, no transform
-                if let touch = touches.first{
-                    previousTouches.append(touch)
-                    startSingleTouch(touch)
-                }
-            }
+            touchesBeganLogicForTransform(touches: touches)
         }
     }
     
     //Move
     public override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if transforming{
+        if transforming || draggingDisabled{
             if previousTouches.count == 1{
                 let touch = previousTouches.first!
                 if !moved{
@@ -121,7 +146,7 @@ public final class UIViewWithGestures: UIView{
     }
     
     //Ended
-    public override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?){
+    func touchesEndedLogic(_ touches: Set<UITouch>){
         if !dragging{//transforming, one finger up
             if let touch = previousTouches.first, let touch1 = previousTouches.last{
                 if touches.contains(touch) || touches.contains(touch1){
@@ -140,7 +165,19 @@ public final class UIViewWithGestures: UIView{
                     endSingleTouch()
                 }
             }
+            if let touch = previousTouches.last{
+                if touches.contains(touch){
+                    previousTouches = []
+                    endSingleTouch()
+                }
+            }
         }
+    }
+    public override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?){
+        touchesEndedLogic(touches)
+    }
+    public override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        touchesEndedLogic(touches)
     }
 }
 
@@ -185,7 +222,7 @@ extension UIViewWithGestures{
     }
     func moveTransform(_ touches: [UITouch]){
         transforming = true
-        print("move transform")
+        //print("move transform")
         
         let doubleTouch = getDoubleTouch(touches)
         //print("doubleTouch:", doubleTouch)
@@ -195,7 +232,7 @@ extension UIViewWithGestures{
         
         previousPoints = doubleTouch
         
-        touchDelegate?.moveTransform(touchTransform)
+        touchDelegate?.changeTransform(touchTransform)
     }
     func endTransform(){
         transforming = false
@@ -218,16 +255,21 @@ extension UIViewWithGestures{
 
 //Single Touches
 extension UIViewWithGestures{
-    func startSingleTouch(_ touch: UITouch){
+    
+    func getSingleTouchPoint(touch: UITouch) -> CGPoint {
         let touchPoint = touch.location(in: self)
         let point: CGPoint = touchPoint*contentScaleFactor
+        return point
+    }
+    
+    func startSingleTouch(_ touch: UITouch){
+        let point = getSingleTouchPoint(touch: touch)
         previousPoint = point
         touchTransform.startSingleTouch(point)
-        touchDelegate?.startSingleTouch(point)
+        touchDelegate?.touched(point)
     }
     func moveSingleTouch(_ touch: UITouch){
-        let touchPoint = touch.location(in: self)
-        let point: CGPoint = touchPoint*contentScaleFactor
+        let point = getSingleTouchPoint(touch: touch)
         let length = distance(previousPoint, point)
         if length>=minimumDrawDistance{
             dragging = true
@@ -235,12 +277,12 @@ extension UIViewWithGestures{
         }
         if dragging{
             touchTransform.moveSingleTouch(point)
-            touchDelegate?.moveSingleTouch(point)
+            touchDelegate?.moveDragging(point)
         }
     }
     func endSingleTouch(){
         dragging = false
         touchTransform.endSingleTouch()
-        touchDelegate?.endSingleTouch()
+        touchDelegate?.endDragging()
     }
 }

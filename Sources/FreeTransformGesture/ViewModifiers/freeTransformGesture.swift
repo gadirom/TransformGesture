@@ -1,10 +1,37 @@
 
 import SwiftUI
 
+public extension View{
+    /// View Modifier that adds a specific gesture recognizer to a SwiftUI view.
+    /// - Parameters:
+    ///   - transform: ``TouchTransform`` object created with `@ObservedObject` modifier.
+    ///   - draggingDisabled: specifies if the dragging feature should be disabled.
+    ///   - transformDisabled: specifies if the transforming feature should be disabled.
+    ///   - touchDelegate: ``TouchDelegate`` object that contains callbacks for handling touch events.
+    ///   - active: turns the modifier on and off.
+    ///   - onTap: the callback for handling tapping gestures.
+    /// - Returns: returns a view with the added gesture recognizer.
+    func freeTransformGesture(transform: TouchTransform,
+                              draggingDisabled: Bool = false,
+                              transformDisabled: Bool = false,
+                              touchDelegate: TouchDelegate? = nil,
+                              active: Bool = true,
+                              onTap: @escaping (CGPoint)->() = {_ in }) -> some View{
+        self.modifier(FreeTransformGestureModifier(transform: transform,
+                                                   draggingDisabled: draggingDisabled,
+                                                   transformDisabled: transformDisabled,
+                                                   touchDelegate: touchDelegate,
+                                                   active: active,
+                                                   onTap: onTap))
+    }
+}
+
 struct FreeTransformGestureModifier: ViewModifier {
     
     let transform: TouchTransform
-    var transformMode: TransformMode
+    var draggingDisabled: Bool
+    var transformDisabled: Bool
+    let touchDelegate: TouchDelegate?
     var active: Bool
     var onTap: (CGPoint)->()
     
@@ -13,8 +40,10 @@ struct FreeTransformGestureModifier: ViewModifier {
     func body(content: Content) -> some View {
         ZStack{
             ViewWithGestures(transform: transform,
-                             transformMode: transformMode,
+                             draggingDisabled: draggingDisabled,
+                             transformDisabled: transformDisabled,
                              frameSize: frameSize,
+                             touchDelegate: touchDelegate,
                              onTap: onTap)
             content
                 .allowsHitTesting(!active)
@@ -26,18 +55,6 @@ struct FreeTransformGestureModifier: ViewModifier {
                 self.frameSize = $0.size
             }
         )
-    }
-}
-
-public extension View{
-    func freeTransformGesture(transform: TouchTransform,
-                              transformMode: TransformMode = .auto,
-                              active: Bool = true,
-                              onTap: @escaping (CGPoint)->() = {_ in }) -> some View{
-        self.modifier(FreeTransformGestureModifier(transform: transform,
-                                                   transformMode: transformMode,
-                                                   active: active,
-                                                   onTap: onTap))
     }
 }
 
