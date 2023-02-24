@@ -2,8 +2,6 @@ DESTINATIONS=
 "\
 -destination 'generic/platform=iOS' \
 -destination 'generic/platform=iOS Simulator' \
--destination 'generic/platform=watchOS' \
--destination 'generic/platform=watchOS Simulator' \
 "
 
 lane :build_debug do |options|

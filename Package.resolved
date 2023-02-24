@@ -1,0 +1,14 @@
+{
+  "pins" : [
+    {
+      "identity" : "cgmath",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/gadirom/CGMath",
+      "state" : {
+        "revision" : "ed3125a2d6d9a98f4a7d58a4f79fc9c159498650",
+        "version" : "1.0.4"
+      }
+    }
+  ],
+  "version" : 2
+}
