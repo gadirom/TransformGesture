@@ -1,5 +1,5 @@
 import SwiftUI
-import FreeTransformGesture
+import TransformGesture
 
 class MyTouchDelegate: TouchDelegate{
     

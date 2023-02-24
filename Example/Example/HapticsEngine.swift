@@ -1,6 +1,6 @@
 import CoreHaptics
 import SwiftUI
-import FreeTransformGesture
+import TransformGesture
 
 struct HapticsEffects: ViewModifier {
     

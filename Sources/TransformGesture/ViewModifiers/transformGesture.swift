@@ -2,7 +2,7 @@
 import SwiftUI
 
 public extension View{
-    /// View Modifier that adds a specific gesture recognizer to a SwiftUI view.
+    /// View modifier that adds a specific gesture recognizer to a SwiftUI view.
     /// - Parameters:
     ///   - transform: ``TouchTransform`` object created with `@ObservedObject` modifier.
     ///   - draggingDisabled: specifies if the dragging feature should be disabled.
@@ -12,13 +12,13 @@ public extension View{
     ///   - active: turns the modifier on and off.
     ///   - onTap: the callback for handling tapping gestures.
     /// - Returns: returns a view with the added gesture recognizer.
-    func freeTransformGesture(transform: TouchTransform,
+    func transformGesture(transform: TouchTransform,
                               draggingDisabled: Bool = false,
                               transformDisabled: Bool = false,
                               touchDelegate: TouchDelegate? = nil,
                               active: Bool = true,
                               onTap: @escaping (CGPoint)->() = {_ in }) -> some View{
-        self.modifier(FreeTransformGestureModifier(transform: transform,
+        self.modifier(TransformGesture(transform: transform,
                                                    draggingDisabled: draggingDisabled,
                                                    transformDisabled: transformDisabled,
                                                    touchDelegate: touchDelegate,
@@ -27,7 +27,7 @@ public extension View{
     }
 }
 
-struct FreeTransformGestureModifier: ViewModifier {
+struct TransformGesture: ViewModifier {
     
     let transform: TouchTransform
     var draggingDisabled: Bool

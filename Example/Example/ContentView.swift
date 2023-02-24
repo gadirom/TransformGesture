@@ -2,7 +2,7 @@ import SwiftUI
 import MetalBuilder
 import MetalKit
 import MetalPerformanceShaders
-import FreeTransformGesture
+import TransformGesture
 
 let particlesCount = 3000
 
@@ -221,7 +221,7 @@ struct ContentView: View {
                                  transformMatrix: $transform.matrix)
                         
                 }
-                .freeTransformGesture(transform: transform,
+                .transformGesture(transform: transform,
                                       draggingDisabled: disableDragging,
                                       transformDisabled: disableTransform,
                                       touchDelegate: touchDelegate,

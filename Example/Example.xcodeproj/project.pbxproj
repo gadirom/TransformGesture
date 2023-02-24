@@ -10,11 +10,11 @@
 		005F98AA29A1E3B1001E573C /* MetalBuilder in Frameworks */ = {isa = PBXBuildFile; productRef = 005F98A929A1E3B1001E573C /* MetalBuilder */; };
 		005F98AE29A1E553001E573C /* DrawCircle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 005F98AD29A1E553001E573C /* DrawCircle.swift */; };
 		005F98B029A1E579001E573C /* HapticsEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 005F98AF29A1E579001E573C /* HapticsEngine.swift */; };
-		005F98B329A1E64B001E573C /* FreeTransformGesture in Frameworks */ = {isa = PBXBuildFile; productRef = 005F98B229A1E64B001E573C /* FreeTransformGesture */; };
 		005F98B529A1EE9E001E573C /* TouchParticle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 005F98B429A1EE9E001E573C /* TouchParticle.swift */; };
 		005F98B729A2A0C6001E573C /* QuadRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 005F98B629A2A0C6001E573C /* QuadRenderer.swift */; };
 		005F98B929A71560001E573C /* MyTouchDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 005F98B829A71560001E573C /* MyTouchDelegate.swift */; };
 		005F98BB29A724C0001E573C /* RenderParticles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 005F98BA29A724C0001E573C /* RenderParticles.swift */; };
+		00B7DDA329A8A18B0053643C /* TransformGesture in Frameworks */ = {isa = PBXBuildFile; productRef = 00B7DDA229A8A18B0053643C /* TransformGesture */; };
 		00BD55A729A1D9A60084DBB1 /* ExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00BD55A629A1D9A60084DBB1 /* ExampleApp.swift */; };
 		00BD55A929A1D9A60084DBB1 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00BD55A829A1D9A60084DBB1 /* ContentView.swift */; };
 		00BD55AB29A1D9A70084DBB1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 00BD55AA29A1D9A70084DBB1 /* Assets.xcassets */; };
@@ -22,13 +22,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		005F98A729A1DBBA001E573C /* FreeTransformGesture */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = FreeTransformGesture; path = ..; sourceTree = "<group>"; };
 		005F98AD29A1E553001E573C /* DrawCircle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawCircle.swift; sourceTree = "<group>"; };
 		005F98AF29A1E579001E573C /* HapticsEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticsEngine.swift; sourceTree = "<group>"; };
 		005F98B429A1EE9E001E573C /* TouchParticle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchParticle.swift; sourceTree = "<group>"; };
 		005F98B629A2A0C6001E573C /* QuadRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuadRenderer.swift; sourceTree = "<group>"; };
 		005F98B829A71560001E573C /* MyTouchDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyTouchDelegate.swift; sourceTree = "<group>"; };
 		005F98BA29A724C0001E573C /* RenderParticles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RenderParticles.swift; sourceTree = "<group>"; };
+		00B7DD9F29A8A15C0053643C /* TransformGesture */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = TransformGesture; path = ..; sourceTree = "<group>"; };
 		00BD55A329A1D9A60084DBB1 /* Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Example.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		00BD55A629A1D9A60084DBB1 /* ExampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleApp.swift; sourceTree = "<group>"; };
 		00BD55A829A1D9A60084DBB1 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -42,7 +42,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				005F98AA29A1E3B1001E573C /* MetalBuilder in Frameworks */,
-				005F98B329A1E64B001E573C /* FreeTransformGesture in Frameworks */,
+				00B7DDA329A8A18B0053643C /* TransformGesture in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -52,7 +52,7 @@
 		005F98A629A1DBBA001E573C /* Packages */ = {
 			isa = PBXGroup;
 			children = (
-				005F98A729A1DBBA001E573C /* FreeTransformGesture */,
+				00B7DD9F29A8A15C0053643C /* TransformGesture */,
 			);
 			name = Packages;
 			sourceTree = "<group>";
@@ -129,12 +129,12 @@
 			buildRules = (
 			);
 			dependencies = (
-				005F98AC29A1E3FB001E573C /* PBXTargetDependency */,
+				00B7DDA129A8A1790053643C /* PBXTargetDependency */,
 			);
 			name = Example;
 			packageProductDependencies = (
 				005F98A929A1E3B1001E573C /* MetalBuilder */,
-				005F98B229A1E64B001E573C /* FreeTransformGesture */,
+				00B7DDA229A8A18B0053643C /* TransformGesture */,
 			);
 			productName = Example;
 			productReference = 00BD55A329A1D9A60084DBB1 /* Example.app */;
@@ -207,9 +207,9 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		005F98AC29A1E3FB001E573C /* PBXTargetDependency */ = {
+		00B7DDA129A8A1790053643C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			productRef = 005F98AB29A1E3FB001E573C /* FreeTransformGesture */;
+			productRef = 00B7DDA029A8A1790053643C /* TransformGesture */;
 		};
 /* End PBXTargetDependency section */
 
@@ -426,13 +426,13 @@
 			package = 005F98A829A1E3B1001E573C /* XCRemoteSwiftPackageReference "MetalBuilder" */;
 			productName = MetalBuilder;
 		};
-		005F98AB29A1E3FB001E573C /* FreeTransformGesture */ = {
+		00B7DDA029A8A1790053643C /* TransformGesture */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = FreeTransformGesture;
+			productName = TransformGesture;
 		};
-		005F98B229A1E64B001E573C /* FreeTransformGesture */ = {
+		00B7DDA229A8A18B0053643C /* TransformGesture */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = FreeTransformGesture;
+			productName = TransformGesture;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
