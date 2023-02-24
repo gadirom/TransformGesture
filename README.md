@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-   <a href="https://github.com/gadirom/TransformGesture"><img src="https://github.com/gadirom/TransformGesture/actions/workflows/CI/badge.svg" alt="CI status" /></a>
+   <a href="https://github.com/gadirom/TransformGesture"><img src="https://github.com/gadirom/TransformGesture/workflows/CI/badge.svg" alt="CI status" /></a>
    
 </p>
 
