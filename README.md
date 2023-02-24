@@ -65,4 +65,6 @@ let coordinatesInsideCanvas = transform
                                 .matrixInveresed
                                 .transformed2D(coord)
 ```
-For more information see the example app (uses  [MetalBuilder](https://github.com/gadirom/MetalBuilder) for showing Metal content overlayed by SwiftUI elements), or read the in-code docs.
+TransformGesture also supports many other features, ranges for transformations, snapping, and handling complex behaviours when you deside whether you want to transform a canvas or draw on it depending on the position of a first touch.
+
+For more information see the example app (uses [MetalBuilder](https://github.com/gadirom/MetalBuilder) for showing Metal content overlayed by SwiftUI elements), or read the in-code docs.
