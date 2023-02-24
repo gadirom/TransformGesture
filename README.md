@@ -15,9 +15,9 @@
 ## Overview
 
 TransformGesture allows you to handle complex gestures such as simultaneous pinching, rotation, and dragging with two fingers in your SwiftUI views.
-You get the gesture information via a delegate pattern or an observable object.
+You get the gesture information via an observable object or/and callbacks.
 
-TransformGesture automatically generates transformation effects and matrices for SwiftUI views and Metal objects (so that they perfectly match if you use them both).
+TransformGesture automatically generates transformation effects and matrices for SwiftUI views and Metal objects (so that they perfectly match if you use both technologies in a same view).
 
 ## How to use
 
