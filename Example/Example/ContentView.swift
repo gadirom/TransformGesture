@@ -21,7 +21,7 @@ var canvasD: simd_float2{
 var canvasTextureScaleFactor: Float = 5
 
 let textureDesc = TextureDescriptor()
-    .fixedSize(.init(width: Int(canvasSize.x*canvasTextureScaleFactor),
+    .fixedSize(.init(width:  Int(canvasSize.x*canvasTextureScaleFactor),
                      height: Int(canvasSize.y*canvasTextureScaleFactor)))
     .pixelFormat(.rgba16Float)
 
@@ -304,10 +304,6 @@ struct ContentView: View {
             .padding()
             .background(Color.black)
         }
-    }
-
-    func checkForPoint(point: CGPoint) -> Bool{
-        true
     }
     
     func clearCanvas(){
