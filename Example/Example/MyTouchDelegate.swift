@@ -14,7 +14,7 @@ class MyTouchDelegate: TouchDelegate{
     }
     
     func touched(_ point: CGPoint) {
-        print("dragging started")
+        print("view is touched")
     }
     
     func moveDragging(_ point: CGPoint) {

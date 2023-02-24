@@ -7,7 +7,7 @@ protocol TouchableParticle: MetalStruct{
     var size: Float { get set }
 }
 
-// Building block that contains a compute function for hit testing
+// Building block for hit testing with a compute function
 struct TouchParticle<T: TouchableParticle>: MetalBuildingBlock {
     
     var context: MetalBuilderRenderingContext

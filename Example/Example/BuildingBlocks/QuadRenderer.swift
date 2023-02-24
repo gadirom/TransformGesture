@@ -6,6 +6,11 @@ import SwiftUI
 // Building block for rendering a quad
 struct QuadRenderer: MetalBuildingBlock {
     
+    struct QuadVertex: MetalStruct{
+        var coord: simd_float2 = [0, 0]
+        var uv: simd_float2 = [0, 0]
+    }
+    
     var pipColorDesc: MTLRenderPipelineColorAttachmentDescriptor{
         let desc = MTLRenderPipelineColorAttachmentDescriptor()
         desc.isBlendingEnabled = true
@@ -27,8 +32,6 @@ struct QuadRenderer: MetalBuildingBlock {
     let sampleTexture: MTLTextureContainer
     
     @Binding var transformMatrix: simd_float3x3
-    
-    //let pipColorDesc: MTLRenderPipelineColorAttachmentDescriptor
     
     @MetalBuffer<QuadVertex>(count: 6, metalName: "quadBuffer") var quadBuffer
     

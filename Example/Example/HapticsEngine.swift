@@ -124,7 +124,7 @@ class HapticsEngine{
         var events = [CHHapticEvent]()
 
         // create one soft tap
-        let intensity = CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.3)
+        let intensity = CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.2)
         let sharpness = CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.1)
         let event = CHHapticEvent(eventType: .hapticTransient, parameters: [intensity, sharpness], relativeTime: 0)
         events.append(event)

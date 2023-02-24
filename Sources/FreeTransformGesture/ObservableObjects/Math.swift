@@ -28,6 +28,10 @@ public extension matrix_float3x3{
         ])
         self = matrix_multiply(self, transform)
     }
+    func transformed2D(_ coord: simd_float2)->simd_float2{
+        let coord1: simd_float3 = [coord.x, coord.y, 1]*self
+        return [coord1.x, coord1.y]
+    }
 }
 
 public extension CGFloat{

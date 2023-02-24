@@ -6,6 +6,7 @@ public extension View{
     /// - Parameters:
     ///   - transform: ``TouchTransform`` object created with `@ObservedObject` modifier.
     ///   - draggingDisabled: specifies if the dragging feature should be disabled.
+    ///   It is possible to change it from `true` to `false` "on the fly" while handling ``isTouching`` published value of the ``TouchTransform`` object (see Example app).
     ///   - transformDisabled: specifies if the transforming feature should be disabled.
     ///   - touchDelegate: ``TouchDelegate`` object that contains callbacks for handling touch events.
     ///   - active: turns the modifier on and off.

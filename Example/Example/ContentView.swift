@@ -4,17 +4,6 @@ import MetalKit
 import MetalPerformanceShaders
 import FreeTransformGesture
 
-struct Particle: TouchableParticle, RenderableParticle{
-    var coord: simd_float2 = [0, 0]
-    var size: Float = 0
-    var color: simd_float3 = [0, 0, 0]
-}
-
-struct QuadVertex: MetalStruct{
-    var coord: simd_float2 = [0, 0]
-    var uv: simd_float2 = [0, 0]
-}
-
 let particlesCount = 3000
 
 var uniformsDesc: UniformsDescriptor{
@@ -36,13 +25,18 @@ let textureDesc = TextureDescriptor()
                      height: Int(canvasSize.y*canvasTextureScaleFactor)))
     .pixelFormat(.rgba16Float)
 
-enum DrawMode: String, Equatable, CaseIterable  {
-    case texture, particle, edit
-    
-    var localizedName: LocalizedStringKey { LocalizedStringKey(rawValue) }
-}
-
 struct ContentView: View {
+    
+    struct Particle: TouchableParticle, RenderableParticle{
+        var coord: simd_float2 = [0, 0]
+        var size: Float = 0
+        var color: simd_float3 = [0, 0, 0]
+    }
+    
+    enum DrawMode: String, Equatable, CaseIterable  {
+        case texture, particle, edit
+        var localizedName: LocalizedStringKey { LocalizedStringKey(rawValue) }
+    }
     
     let touchDelegate = MyTouchDelegate()
     
@@ -76,29 +70,24 @@ struct ContentView: View {
     @State var disableDragging = false
     @State var disableTransform = false
     
-    @MetalState var tapped: CGPoint? = nil
-    
-    @MetalState var drawCircle = false
-    
     @MetalState var justStarted = true
     
+    @MetalState var dragging = false
+    @MetalState var tapped: CGPoint? = nil
+    @MetalState var drawCircle = false
     @MetalState var oneParticleIsTouched = false
-    
-    @MetalState var touchedId = 0
     @MetalState var testTouch = false
     
-    @MetalBuffer<Particle>(count: particlesCount) var particlesBuffer
-    
-    @MetalTexture(textureDesc) var drawTexture
-    
+    @MetalState var touchedParticleId = 0
+    @MetalState var touchedParticleInitialCoords: simd_float2 = [0, 0]
     @MetalState var particleId = 0
     
-    @MetalState var dragging = false
+    @MetalBuffer<Particle>(count: particlesCount) var particlesBuffer
+    @MetalTexture(textureDesc) var drawTexture
+    
     @MetalState var coordTransformed: simd_float2 = [0, 0]
     @MetalState var drawingCircleSize: Float = 0
     @State var circleSize: CGFloat = 0
-    
-    @MetalState var touchedParticleInitialCoords: simd_float2 = [0, 0]
     
     @MetalUniforms(uniformsDesc) var uniforms
     
@@ -142,27 +131,33 @@ struct ContentView: View {
                         }
                         
                         //prepare transformed coordinates
-                        let coord1: simd_float3 = [coord.x, coord.y, 1]*transform.matrixInveresed
+                        coord = transform
+                            .matrixInveresed
+                            .transformed2D(coord)
+                        
                         let rx: ClosedRange<Float> = -canvasD.x...canvasD.x
                         let ry: ClosedRange<Float> = -canvasD.y...canvasD.y
                         
-                        let coordInside = rx.contains(coord1.x) && ry.contains(coord1.y)
+                        let coordInside = rx.contains(coord.x) &&
+                                          ry.contains(coord.y)
                         guard coordInside else {
                             return
                         }
-                        coordTransformed = [coord1.x, coord1.y]
+                        coordTransformed = coord
                         
                         //prepare to draw
                         if !oneParticleIsTouched &&
                             (transform.isDragging || tapped != nil){
                             
+                            let size = uniforms.getFloat("size")!
+                            
                             switch drawMode {
                             case .texture:
-                                drawingCircleSize = uniforms.getFloat("size")! * canvasTextureScaleFactor
+                                drawingCircleSize = size * canvasTextureScaleFactor
                                 drawCircle = true
                             case .particle:
-                                spawnParticle(coord: [coord1.x, coord1.y],
-                                              size: uniforms.getFloat("size")!)
+                                spawnParticle(coord: coordTransformed,
+                                              size: size)
                             case .edit: break
                             }
                         }else{
@@ -176,10 +171,11 @@ struct ContentView: View {
                                       particlesBuffer: particlesBuffer,
                                       touchCoord: $coordTransformed,
                                       particlesCount: $particlesCountState,
-                                      touchedId: $touchedId,
+                                      touchedId: $touchedParticleId,
                                       isTouched: $oneParticleIsTouched)
                     }
                     CPUCompute{ _ in
+                        
                         if !transform.isTouching || drawCircle{
                             oneParticleIsTouched = false
                             dragging = false
@@ -192,14 +188,15 @@ struct ContentView: View {
                             if drawMode == .edit{
                                 disableDragging = false
                             }
-                            circleSize = CGFloat(particlesBuffer.pointer![touchedId].size)
+                            circleSize = CGFloat(particlesBuffer.pointer![touchedParticleId].size)
                             if dragging{
-                                let o = transform.floatCurrentTouch
-                                let o1 = [o.x, o.y, 1]*transform.matrixInveresed
-                                particlesBuffer.pointer![touchedId].coord = [o1.x, o1.y]
-                                //print("offset:", o1)
+                                particlesBuffer
+                                    .pointer![touchedParticleId].coord =
+                                transform
+                                    .matrixInveresed
+                                    .transformed2D(transform.floatCurrentTouch)
                             }else{
-                                touchedParticleInitialCoords = particlesBuffer.pointer![touchedId].coord
+                                touchedParticleInitialCoords = particlesBuffer.pointer![touchedParticleId].coord
                                 dragging = true
                                 testTouch = false
                             }
@@ -218,7 +215,6 @@ struct ContentView: View {
                                    circleSize: $drawingCircleSize,
                                    canvasSize: $canvasSizeState)
                     }
-                    
                     QuadRenderer(context: context,
                                  toTexture: nil,
                                  sampleTexture: drawTexture,
@@ -236,7 +232,7 @@ struct ContentView: View {
                 }
                 if transform.isTouching && drawMode != .edit && !disableDragging{
                     Circle()
-                        .stroke(transform.isDragging ? Color.white : Color.gray)
+                        .stroke(transform.isDragging ? Color.white : Color.black)
                         .frame(width: transform.scale*circleSize)
                         .position(transform.firstTouch)
                         .offset(transform.offset)
@@ -257,7 +253,6 @@ struct ContentView: View {
                             .fill(Color.white)
                             .frame(width: 1)
                     }
-                    //.opacity(0.5)
                     .frame(width: 20, height: 20)
                     .rotationEffect(Angle(radians: transform.rotation))
                     .offset(offset)
@@ -306,7 +301,7 @@ struct ContentView: View {
                     .disabled(true)
                 Toggle("Disable Transforming:", isOn: $disableTransform)
             }
-            .padding([.top, .bottom])
+            .padding()
             .background(Color.black)
         }
     }

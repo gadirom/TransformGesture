@@ -157,6 +157,9 @@ final class UIViewWithGestures: UIView{
                         endTransform()
                     }
                 }
+            }else{
+                //last finger up
+                endTransform()
             }
         }else{
             if let touch = previousTouches.first{

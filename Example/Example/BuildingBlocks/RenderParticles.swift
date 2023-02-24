@@ -10,7 +10,7 @@ protocol RenderableParticle{
     var color: simd_float3 { get }
 }
 
-// Building block for drawing a circle on a texture
+// Building block for rendering particles
 struct RenderParticles<T: RenderableParticle>: MetalBuildingBlock {
     
     var pipColorDesc: MTLRenderPipelineColorAttachmentDescriptor{
