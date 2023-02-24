@@ -1,0 +1,62 @@
+DESTINATIONS=
+"\
+-destination 'generic/platform=iOS' \
+-destination 'generic/platform=iOS Simulator' \
+-destination 'generic/platform=watchOS' \
+-destination 'generic/platform=watchOS Simulator' \
+"
+
+lane :build_debug do |options|
+
+  xcodebuild(
+    scheme: "TransformGesture",
+    xcargs: "\
+clean \
+-configuration debug \
+#{DESTINATIONS} \
+-xcconfig TransformGesture.xcconfig\
+"
+  )
+
+  xcodebuild(
+    scheme: "TransformGesture",
+    xcargs: "\
+build \
+-configuration debug \
+#{DESTINATIONS} \
+-xcconfig TransformGesture.xcconfig\
+"
+  )
+
+end
+
+lane :build_release do |options|
+
+  xcodebuild(
+    scheme: "TransformGesture",
+    xcargs: "\
+clean \
+-configuration release \
+#{DESTINATIONS} \
+-xcconfig TransformGesture.xcconfig\
+"
+  )
+
+  xcodebuild(
+    scheme: "TransformGesture",
+    xcargs: "\
+build \
+-configuration release \
+#{DESTINATIONS} \
+-xcconfig TransformGesture.xcconfig\
+"
+  )
+
+end
+
+lane :generate_xcodeproj do |options|
+  spm(
+    command: "generate-xcodeproj",
+    xcconfig: "TransformGesture.xcconfig"
+  )
+end
