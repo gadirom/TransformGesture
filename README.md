@@ -12,6 +12,10 @@
    
 </p>
 
+<p align="left">
+   <a href="https://github.com/gadirom/TransformGesture"><img src="Example/Example.gif" alt="video"/>
+</p> 
+
 ## Overview
 
 TransformGesture allows you to handle complex gestures such as simultaneous pinching, rotation, and dragging with two fingers in your SwiftUI views.
