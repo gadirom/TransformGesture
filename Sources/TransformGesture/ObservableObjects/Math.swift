@@ -84,7 +84,8 @@ public extension CGSize{
     var simd_float2: simd_float2{
         [Float(self.width), Float(self.height)]
     }
-    var simd_float3: simd_float2{
+    //Returns homogenious coordinates
+    var simd_float3: simd_float3{
         [Float(self.width), Float(self.height), 1]
     }
 }
