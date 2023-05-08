@@ -35,7 +35,7 @@ public class TouchTransform: ObservableObject{
                 rotationSnapPeriod: CGFloat = .greatestFiniteMagnitude,
                 rotationSnapDistance: CGFloat = 0,
                 scaleSnapDistance: CGFloat = 0,
-                disableRelativeRotation: Bool = false) {
+                disableRelativeRotationAndScale: Bool = false) {
         self.resulting.translation = translation
         self.resulting.scale = scale
         self.resulting.rotation = rotation
@@ -58,7 +58,7 @@ public class TouchTransform: ObservableObject{
         
         self.scaleSnapDistance = scaleSnapDistance
         
-        self.disableRelativeRotationAndScale = disableRelativeRotation
+        self.disableRelativeRotationAndScale = disableRelativeRotationAndScale
     }
     
     //Published Dragging Values
