@@ -48,7 +48,7 @@ struct ContentView: View {
     @MetalState var particlesCountState = particlesCount
     @MetalState var canvasSizeState = canvasSize
     
-    @ObservedObject var transform = TouchTransform(
+    @StateObject var transform = TouchTransform(
         translation: CGSize(width: 0,
                             height:0),
         scale: 1,

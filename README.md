@@ -27,7 +27,7 @@ TransformGesture automatically generates transformation effects and matrices for
 
 In your SwiftUI view declare an observed `TouchTransform` object:
 ```
-@ObservedObject var transform = TouchTransform()
+@StateObject var transform = TouchTransform()
 ```
 
 Use `transformGesture` modifier on a view that will receive gestures:

@@ -6,7 +6,7 @@ import CGMath
 @MainActor
 /// Use this observable object to get touch information from ``freeTransformGesture`` view modifier,
 /// pass it to ``transformEffect`` modifier to accordingly transform your views.
-/// This object should be created with `@ObservedObject` attribute in your view hierarchy.
+/// This object should be created with `@StateObject` attribute in your view hierarchy.
 public class TouchTransform: ObservableObject{
     /// Creates an instance of ``TouchTransform``.
     /// - Parameters:
