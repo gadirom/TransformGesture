@@ -22,6 +22,7 @@ public class TouchTransform: ObservableObject{
     ///   - rotationSnapPeriod: period for rotation snapping in radians.
     ///   - rotationSnapDistance: max rotational deviation for snapping.
     ///   - scaleSnapDistance: max zooming deviation from 1 for snapping to 1.
+    ///   - disableRelativeRotation: rotation is performed with center axis instead of using the centerpoint between two fingers
     public init(translation: CGSize = .zero,
                 scale: CGFloat = 1,
                 rotation: CGFloat = 0,
@@ -33,7 +34,8 @@ public class TouchTransform: ObservableObject{
                 translationYSnapDistance: CGFloat = 0,
                 rotationSnapPeriod: CGFloat = .greatestFiniteMagnitude,
                 rotationSnapDistance: CGFloat = 0,
-                scaleSnapDistance: CGFloat = 0) {
+                scaleSnapDistance: CGFloat = 0,
+                disableRelativeRotation: Bool = false) {
         self.resulting.translation = translation
         self.resulting.scale = scale
         self.resulting.rotation = rotation
@@ -55,6 +57,8 @@ public class TouchTransform: ObservableObject{
         self.rotationSnapPeriod = rotationSnapPeriod
         
         self.scaleSnapDistance = scaleSnapDistance
+        
+        self.disableRelativeRotation = disableRelativeRotation
     }
     
     //Published Dragging Values
@@ -133,6 +137,8 @@ public class TouchTransform: ObservableObject{
     var resulting = Transform()
     
     var centerTranslation: CGSize = .zero
+    
+    let disableRelativeRotation: Bool
 }
 
 // Public functions
@@ -269,7 +275,9 @@ extension TouchTransform{
             scaleVector = scaleVector * (current.scale-1)
             newTranslation += scaleVector
             
-            newTranslation.rotate(center: resulting.centerPoint, angle: current.rotation)
+            if !disableRelativeRotation{
+                newTranslation.rotate(center: resulting.centerPoint, angle: current.rotation)
+            }
             
             var translation1: CGSize = previous.translation + current.translation + translation
             (translation1.width, translationXOutOfBounds) = translationRangeX.clamp(value: translation1.width)
