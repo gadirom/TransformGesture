@@ -22,7 +22,7 @@ public class TouchTransform: ObservableObject{
     ///   - rotationSnapPeriod: period for rotation snapping in radians.
     ///   - rotationSnapDistance: max rotational deviation for snapping.
     ///   - scaleSnapDistance: max zooming deviation from 1 for snapping to 1.
-    ///   - disableRelativeRotation: rotation is performed with center axis instead of using the centerpoint between two fingers
+    ///   - disableRelativeRotationAndScale: rotation andd scale is performed with center axis instead of using the centerpoint between two fingers
     public init(translation: CGSize = .zero,
                 scale: CGFloat = 1,
                 rotation: CGFloat = 0,
@@ -58,7 +58,7 @@ public class TouchTransform: ObservableObject{
         
         self.scaleSnapDistance = scaleSnapDistance
         
-        self.disableRelativeRotation = disableRelativeRotation
+        self.disableRelativeRotationAndScale = disableRelativeRotation
     }
     
     //Published Dragging Values
@@ -138,7 +138,7 @@ public class TouchTransform: ObservableObject{
     
     var centerTranslation: CGSize = .zero
     
-    let disableRelativeRotation: Bool
+    let disableRelativeRotationAndScale: Bool
 }
 
 // Public functions
@@ -271,11 +271,11 @@ extension TouchTransform{
             
             var newTranslation: CGSize = previous.translation
             
-            var scaleVector: CGPoint = newTranslation - resulting.centerPoint
-            scaleVector = scaleVector * (current.scale-1)
-            newTranslation += scaleVector
-            
-            if !disableRelativeRotation{
+            if !disableRelativeRotationAndScale{
+                var scaleVector: CGPoint = newTranslation - resulting.centerPoint
+                scaleVector = scaleVector * (current.scale-1)
+                newTranslation += scaleVector
+                
                 newTranslation.rotate(center: resulting.centerPoint, angle: current.rotation)
             }
             
