@@ -33,15 +33,16 @@ struct RenderParticles<T: RenderableParticle>: MetalBuildingBlock {
     let particlesBuffer: MTLBufferContainer<T>
     let toTexture: MTLTextureContainer? = nil
     
-    @ObservedObject var transform: TouchTransform
+    let transform: TouchTransform
     
     var metalContent: MetalContent{
+        var transform = Bindable(transform)
         Render(type: .point, count: particlesCount)
             .toTexture(toTexture)
             .vertexBuf(particlesBuffer, name: "particles")
-            .vertexBytes($transform.matrix, type: "float3x3", name: "transform")
+            .vertexBytes(transform.matrix, type: "float3x3", name: "transform")
             .vertexBytes(context.$viewportToDeviceTransform)
-            .vertexBytes($transform.floatScale, type: "float", name: "scale")
+            .vertexBytes(transform.floatScale, type: "float", name: "scale")
             .vertexBytes(context.$scaleFactor)
             .pipelineColorAttachment(pipColorDesc)
             .colorAttachement(

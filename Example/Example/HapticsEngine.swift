@@ -4,45 +4,45 @@ import TransformGesture
 
 struct HapticsEffects: ViewModifier {
     
-    @ObservedObject var transform: TouchTransform
+    let transform: TouchTransform
     
     @Environment(\.scenePhase) var scenePhase
     @State var hapticsEngine = HapticsEngine()
     
     func body(content: Content) -> some View {
         content
-            .onChange(of: transform.offset) { newValue in
+            .onChange(of: transform.offset) { newValue, oldValue in
                 hapticsEngine.onDraw()
             }
-            .onChange(of: transform.translationXSnapped) { newValue in
+            .onChange(of: transform.translationXSnapped) { newValue, oldValue  in
                 if newValue{
                     hapticsEngine.onSnap()
                 }else{
                     hapticsEngine.offSnap()
                 }
             }
-            .onChange(of: transform.translationYSnapped) { newValue in
+            .onChange(of: transform.translationYSnapped) { newValue, oldValue  in
                 if newValue{
                     hapticsEngine.onSnap()
                 }else{
                     hapticsEngine.offSnap()
                 }
             }
-            .onChange(of: transform.rotationSnapped) { newValue in
+            .onChange(of: transform.rotationSnapped) { newValue, oldValue  in
                 if newValue{
                     hapticsEngine.onSnap()
                 }else{
                     hapticsEngine.offSnap()
                 }
             }
-            .onChange(of: transform.scaleSnapped) { newValue in
+            .onChange(of: transform.scaleSnapped) { newValue, oldValue  in
                 if newValue{
                     hapticsEngine.onSnap()
                 }else{
                     hapticsEngine.offSnap()
                 }
             }
-            .onChange(of: scenePhase) { newValue in
+            .onChange(of: scenePhase) { newValue, oldValue in
                 if newValue == .active{
                     hapticsEngine.start()
                 }
