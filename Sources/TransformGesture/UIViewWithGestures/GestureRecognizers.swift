@@ -73,17 +73,20 @@ extension UIViewWithGestures: UIGestureRecognizerDelegate{
             touchTransform.initTransform()
         case .changed:
             
-            touchTransform.clampAndSnap(
-                scale: pow(recognizer.scale, 0.5),
-                angle: 0,
-                translation: .zero)
-            touchTransform.updatePublishedTransformValues()
+            if let _ = touchTransform.current{
+                
+                touchTransform.clampAndSnap(
+                    scale: pow(recognizer.scale, 0.5),
+                    angle: 0,
+                    translation: .zero)
+                touchTransform.updatePublishedTransformValues()
             
-            //touchTransform.endTransform()
+                recognizer.scale = 1.0
+            }
             
-            recognizer.scale = 1.0
             
         case .ended, .cancelled:
+            print("transform ended in pinch")
             touchTransform.current = nil
             
         default: break
@@ -112,20 +115,24 @@ extension UIViewWithGestures: UIGestureRecognizerDelegate{
             
         case .changed:
             
-            let translation = CGSize(
-                width:  recognizer.translation(in: self).x,
-                height: recognizer.translation(in: self).y
-            )
-            
-            touchTransform.clampAndSnap(
-                scale: 1,
-                angle: 0,
-                translation: translation)
-            touchTransform.updatePublishedTransformValues()
-            
-            recognizer.setTranslation(.zero, in: recognizer.view)
+            if let _ = touchTransform.current{
+                
+                let translation = CGSize(
+                    width:  recognizer.translation(in: self).x,
+                    height: recognizer.translation(in: self).y
+                )
+                
+                touchTransform.clampAndSnap(
+                    scale: 1,
+                    angle: 0,
+                    translation: translation)
+                touchTransform.updatePublishedTransformValues()
+                
+                recognizer.setTranslation(.zero, in: recognizer.view)
+            }
             
         case .ended, .cancelled:
+            print("transform ended in scroll")
             touchTransform.current = nil
             
         default: break
