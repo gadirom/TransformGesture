@@ -55,7 +55,7 @@ extension UIViewWithGestures{
         //print("doubleTouch:", doubleTouch)
        
         touchTransform.updateTransform(prev: previousPoints,
-                              curr: doubleTouch)
+                                       curr: doubleTouch)
         
         previousPoints = doubleTouch
         

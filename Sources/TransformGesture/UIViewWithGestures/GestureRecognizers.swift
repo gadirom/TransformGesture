@@ -87,7 +87,8 @@ extension UIViewWithGestures: UIGestureRecognizerDelegate{
             
         case .ended, .cancelled:
             print("transform ended in pinch")
-            touchTransform.current = nil
+            //touchTransform.current = nil
+            endTransform()
             
         default: break
         }
@@ -133,7 +134,8 @@ extension UIViewWithGestures: UIGestureRecognizerDelegate{
             
         case .ended, .cancelled:
             print("transform ended in scroll")
-            touchTransform.current = nil
+            endTransform()
+            //touchTransform.current = nil
             
         default: break
         }
