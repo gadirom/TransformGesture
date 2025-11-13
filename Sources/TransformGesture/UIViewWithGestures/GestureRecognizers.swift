@@ -32,6 +32,11 @@ extension UIViewWithGestures: UIGestureRecognizerDelegate{
         self.pinchRecognizer = pinch
         self.scrollRecognizer = scroll
         
+        let hover = UIHoverGestureRecognizer(target: self,
+                                             action: #selector(hovering))
+        
+        addGestureRecognizer(hover)
+        
         //
         
 //        let pan = UIPanGestureRecognizer(target: self,
@@ -74,6 +79,10 @@ extension UIViewWithGestures: UIGestureRecognizerDelegate{
         case .changed:
             
             if let _ = touchTransform.current{
+                
+                if let hoverPoint, touchDelegate?.centerOnHover ?? true{
+                    touchTransform._updateCenterPoint(point: hoverPoint)
+                }
                 
                 touchTransform.clampAndSnap(
                     scale: pow(recognizer.scale, 0.5),
@@ -139,5 +148,9 @@ extension UIViewWithGestures: UIGestureRecognizerDelegate{
             
         default: break
         }
+    }
+    
+    @objc func hovering(recognizer: UIHoverGestureRecognizer) {
+        processHover(recognizer: recognizer)
     }
 }

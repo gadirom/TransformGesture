@@ -44,6 +44,8 @@ final class UIViewWithGestures: UIView{
     internal var pinchRecognizer: UIGestureRecognizer!
     internal var scrollRecognizer: UIGestureRecognizer!
     
+    internal var hoverPoint: CGPoint?
+    
     init(touchTransform: TouchTransform,
          draggingDisabled: Bool,
          transformDisabled: Bool,

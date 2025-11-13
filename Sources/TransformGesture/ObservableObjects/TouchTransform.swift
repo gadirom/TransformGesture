@@ -187,9 +187,16 @@ extension TouchTransform{
         }
     }
     func updateCenterPoint(doubleTouch:  [CGPoint]){
-        self.resulting.centerPoint = median(doubleTouch[0], doubleTouch[1])
-        - centerTranslation
-        
+        let point: CGPoint = median(doubleTouch[0], doubleTouch[1])
+        self._updateCenterPoint(point: point)
+    }
+//    func updateCenterPointFromHover(point: CGPoint){
+//        if self.current != nil{
+//            self._updateCenterPoint(point: point)
+//        }
+//    }
+    func _updateCenterPoint(point: CGPoint){
+        self.resulting.centerPoint = point - centerTranslation
         updatePublishedTransformValues()
     }
 }

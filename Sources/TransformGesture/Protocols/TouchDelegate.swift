@@ -19,4 +19,8 @@ public protocol TouchDelegate: AnyObject{
     func endDragging()
     
     func tap(_ point: CGPoint)
+    
+    func onHover(_ point: CGPoint, state: UIGestureRecognizer.State)
+    
+    var centerOnHover: Bool{ get }
 }
