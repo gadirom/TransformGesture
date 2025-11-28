@@ -31,7 +31,7 @@ final class UIViewWithGestures: UIView{
     
     var onTap: (CGPoint)->()
     
-    weak var touchDelegate: TouchDelegate?
+    //weak var touchDelegate: TouchDelegate?
     
     var previousTouches: [UITouch] = []
     var previousPoints: [CGPoint] = []

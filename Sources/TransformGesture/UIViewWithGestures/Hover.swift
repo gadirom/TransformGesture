@@ -20,6 +20,6 @@ extension UIViewWithGestures{
             self.hoverPoint = nil
         }
         
-        touchDelegate?.onHover(point, state: recognizer.state)
+        touchTransform.delegate?.onHover(point, state: recognizer.state)
     }
 }

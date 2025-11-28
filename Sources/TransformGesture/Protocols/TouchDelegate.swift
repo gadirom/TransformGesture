@@ -20,7 +20,42 @@ public protocol TouchDelegate: AnyObject{
     
     func tap(_ point: CGPoint)
     
+    func onFrameChange(frameSize: CGSize)
+    
     func onHover(_ point: CGPoint, state: UIGestureRecognizer.State)
     
     var centerOnHover: Bool{ get }
+}
+
+public extension TouchDelegate{
+    func startTransform() {
+    }
+    
+    func changeTransform(_ transform: TouchTransform) {
+    }
+    
+    func endTransform(_ transform: TouchTransform) {
+    }
+    
+    func touched(_ point: CGPoint) {
+    }
+    
+    func moveDragging(_ point: CGPoint) {
+    }
+    
+    func endDragging() {
+    }
+    
+    func tap(_ point: CGPoint) {
+    }
+    
+    func onFrameChange(frameSize: CGSize) {
+    }
+    
+    func onHover(_ point: CGPoint, state: UIGestureRecognizer.State) {
+    }
+    
+    var centerOnHover: Bool{
+        true
+    }
 }

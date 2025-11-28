@@ -27,7 +27,7 @@ extension UIViewWithGestures{
         
         previousPoints = doubleTouch
         
-        touchDelegate?.startTransform()
+        touchTransform.delegate?.startTransform()
     }
     //when it was one touch, but now its two
     func continueTransform(_ touches: [UITouch]){
@@ -59,12 +59,12 @@ extension UIViewWithGestures{
         
         previousPoints = doubleTouch
         
-        touchDelegate?.changeTransform(touchTransform)
+        touchTransform.delegate?.changeTransform(touchTransform)
     }
     func endTransform(){
         transforming = false
         print("end transform")
         touchTransform.endTransform()
-        touchDelegate?.endTransform(touchTransform)
+        touchTransform.delegate?.endTransform(touchTransform)
     }
 }

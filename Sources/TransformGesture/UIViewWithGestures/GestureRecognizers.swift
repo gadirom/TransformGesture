@@ -80,7 +80,7 @@ extension UIViewWithGestures: UIGestureRecognizerDelegate{
             
             if let _ = touchTransform.current{
                 
-                if let hoverPoint, touchDelegate?.centerOnHover ?? true{
+                if let hoverPoint, touchTransform.delegate?.centerOnHover ?? true{
                     touchTransform._updateCenterPoint(point: hoverPoint)
                 }
                 

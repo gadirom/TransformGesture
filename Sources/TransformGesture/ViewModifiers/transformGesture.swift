@@ -8,20 +8,19 @@ public extension View{
     ///   - draggingDisabled: specifies if the dragging feature should be disabled.
     ///   It is possible to change it from `true` to `false` "on the fly" while handling ``isTouching`` published value of the ``TouchTransform`` object (see Example app).
     ///   - transformDisabled: specifies if the transforming feature should be disabled.
-    ///   - touchDelegate: ``TouchDelegate`` object that contains callbacks for handling touch events.
     ///   - active: turns the modifier on and off.
     ///   - onTap: the callback for handling tapping gestures.
     /// - Returns: returns a view with the added gesture recognizer.
     func transformGesture(transform: TouchTransform,
                               draggingDisabled: Bool = false,
                               transformDisabled: Bool = false,
-                              touchDelegate: TouchDelegate? = nil,
+//                              touchDelegate: TouchDelegate? = nil,
                               active: Bool = true,
                               onTap: @escaping (CGPoint)->() = {_ in }) -> some View{
         self.modifier(TransformGesture(transform: transform,
                                                    draggingDisabled: draggingDisabled,
                                                    transformDisabled: transformDisabled,
-                                                   touchDelegate: touchDelegate,
+//                                                   touchDelegate: touchDelegate,
                                                    active: active,
                                                    onTap: onTap))
     }
@@ -32,19 +31,19 @@ struct TransformGesture: ViewModifier {
     let transform: TouchTransform
     var draggingDisabled: Bool
     var transformDisabled: Bool
-    let touchDelegate: TouchDelegate?
+//    let touchDelegate: TouchDelegate?
     var active: Bool
     var onTap: (CGPoint)->()
     
-    @State var frameSize = CGSize()
+    //@State var frameSize = CGSize()
     
     func body(content: Content) -> some View {
         ZStack{
             ViewWithGestures(transform: transform,
                              draggingDisabled: draggingDisabled,
                              transformDisabled: transformDisabled,
-                             frameSize: frameSize,
-                             touchDelegate: touchDelegate,
+                             //frameSize: frameSize,
+                             //touchDelegate: touchDelegate,
                              onTap: onTap)
             content
                 .allowsHitTesting(!active)
@@ -53,7 +52,7 @@ struct TransformGesture: ViewModifier {
                 Color.clear
                     .preference(key: FramePreferenceKey.self, value: geo.frame(in:.global))
             }.onPreferenceChange(FramePreferenceKey.self){
-                self.frameSize = $0.size
+                self.transform.frameSize = $0.size
             }
         )
     }

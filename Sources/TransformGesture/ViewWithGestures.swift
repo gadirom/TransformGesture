@@ -12,8 +12,8 @@ struct ViewWithGestures: UIViewRepresentable {
     let transform: TouchTransform
     var draggingDisabled: Bool
     var transformDisabled: Bool
-    var frameSize: CGSize
-    var touchDelegate: TouchDelegate?
+    //var frameSize: CGSize
+    //var touchDelegate: TouchDelegate?
     var onTap: (CGPoint)->()
     
     func makeCoordinator() -> Coordinator {
@@ -28,13 +28,13 @@ struct ViewWithGestures: UIViewRepresentable {
                                         onTap: onTap)
         uiView.draggingDisabled = draggingDisabled
         uiView.transformDisabled = transformDisabled
-        uiView.touchDelegate = touchDelegate
+        //uiView.touchDelegate = touchDelegate
         return uiView
     }
     func updateUIView(_ uiView: UIViewWithGestures, context: UIViewRepresentableContext<Self>) {
         uiView.draggingDisabled = draggingDisabled
         uiView.transformDisabled = transformDisabled
-        uiView.setFrameSize(frameSize)
+        uiView.setFrameSize(transform.frameSize)
     }
 }
 

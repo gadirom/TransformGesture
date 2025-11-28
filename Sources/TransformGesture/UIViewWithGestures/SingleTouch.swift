@@ -15,7 +15,7 @@ extension UIViewWithGestures{
         let point: CGPoint = touchPoint*contentScaleFactor
         touchTransform.endSingleTouch()
         onTap(touchPoint)
-        touchDelegate?.tap(point)
+        touchTransform.delegate?.tap(point)
     }
 }
 
@@ -32,7 +32,7 @@ extension UIViewWithGestures{
         let point = getSingleTouchPoint(touch: touch)
         previousPoint = point
         touchTransform.startSingleTouch(point)
-        touchDelegate?.touched(point)
+        touchTransform.delegate?.touched(point)
     }
     func moveSingleTouch(_ touch: UITouch){
         let point = getSingleTouchPoint(touch: touch)
@@ -43,12 +43,12 @@ extension UIViewWithGestures{
         }
         if dragging{
             touchTransform.moveSingleTouch(point)
-            touchDelegate?.moveDragging(point)
+            touchTransform.delegate?.moveDragging(point)
         }
     }
     func endSingleTouch(){
         dragging = false
         touchTransform.endSingleTouch()
-        touchDelegate?.endDragging()
+        touchTransform.delegate?.endDragging()
     }
 }

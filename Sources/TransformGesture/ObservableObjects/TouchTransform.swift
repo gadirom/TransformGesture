@@ -8,7 +8,7 @@ import CGMath
 /// Use this observable object to get touch information from ``freeTransformGesture`` view modifier,
 /// pass it to ``transformEffect`` modifier to accordingly transform your views.
 /// This object should be created with `@StateObject` attribute in your view hierarchy.
-public class TouchTransform{
+final public class TouchTransform{
     /// Creates an instance of ``TouchTransform``.
     /// - Parameters:
     ///   - translation: initial translation.
@@ -135,6 +135,15 @@ public class TouchTransform{
     public var rotationSnapDistance: CGFloat
     public var rotationSnapPeriod: CGFloat
     
+    public internal(set) var frameSize = CGSize(){
+        didSet{
+            delegate?.onFrameChange(frameSize: frameSize)
+        }
+    }
+    
+    @ObservationIgnored
+    public var delegate: TouchDelegate?
+    
     //Private properties
     var current: Transform!
     var previous = Transform()
@@ -154,6 +163,25 @@ public extension TouchTransform{
         updatePublishedTransformValues()
         current = nil
     }
+    
+    func setScale(_ s: CGFloat){
+        
+        initTransform()
+        if let _ = current{
+            
+//            if let hoverPoint, touchDelegate?.centerOnHover ?? true{
+//                touchTransform._updateCenterPoint(point: hoverPoint)
+//            }
+            
+            clampAndSnap(
+                scale: s/self.scale,
+                angle: 0,
+                translation: .zero)
+            updatePublishedTransformValues()
+        }
+        endTransform()
+        
+    }
 }
 
 // Helper Functions
@@ -169,7 +197,7 @@ extension TouchTransform{
         translation = resulting.translation
         scale = resulting.scale
         rotation = -resulting.rotation
-        centerPoint = resulting.centerPoint+current.translation
+        centerPoint = resulting.centerPoint + current.translation
         
         floatTranslation = translation.simd_float2
         floatScale = Float(scale)
