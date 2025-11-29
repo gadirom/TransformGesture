@@ -140,6 +140,7 @@ final public class TouchTransform{
             delegate?.onFrameChange(frameSize: frameSize)
         }
     }
+    public var valuesUpdated: Bool = false
     
     @ObservationIgnored
     public var delegate: TouchDelegate?
@@ -164,7 +165,9 @@ public extension TouchTransform{
         current = nil
     }
     
-    func setScale(_ s: CGFloat){
+    func setAbsoluteTransform(scale: CGFloat?=nil,
+                              translation: CGSize?=nil,
+                              rotation: CGFloat?=nil){
         
         initTransform()
         if let _ = current{
@@ -173,10 +176,20 @@ public extension TouchTransform{
 //                touchTransform._updateCenterPoint(point: hoverPoint)
 //            }
             
-            clampAndSnap(
-                scale: s/self.scale,
-                angle: 0,
-                translation: .zero)
+//            let s = if let scale{ scale/self.scale}else{ CGFloat(1) }
+//            let angle = if let rotation{ rotation-self.rotation }else{ CGFloat.zero }
+//            let translation = if let translation{ CGSize(translation-self.translation) }else{ CGSize.zero }
+            
+            if let scale{ resulting.scale = scale }
+            if let rotation{ resulting.rotation = -rotation }
+            if let translation{
+                current.translation = .zero
+                resulting.translation = translation }
+            resulting.centerPoint = .zero
+//            clampAndSnap(
+//                scale: s,
+//                angle: angle,
+//                translation: translation)
             updatePublishedTransformValues()
         }
         endTransform()
@@ -203,6 +216,8 @@ extension TouchTransform{
         floatScale = Float(scale)
         floatRotation = Float(rotation)
         floatCenterPoint = centerPoint.simd_float2
+        
+        valuesUpdated = true
     }
     
     func setFrameSize(_ size: CGSize){
