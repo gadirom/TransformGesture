@@ -4,10 +4,11 @@ import MetalKit
 import CGMath
 
 @MainActor
+@Observable
 /// Use this observable object to get touch information from ``freeTransformGesture`` view modifier,
 /// pass it to ``transformEffect`` modifier to accordingly transform your views.
 /// This object should be created with `@StateObject` attribute in your view hierarchy.
-public class TouchTransform: ObservableObject{
+final public class TouchTransform{
     /// Creates an instance of ``TouchTransform``.
     /// - Parameters:
     ///   - translation: initial translation.
@@ -36,19 +37,11 @@ public class TouchTransform: ObservableObject{
                 rotationSnapDistance: CGFloat = 0,
                 scaleSnapDistance: CGFloat = 0,
                 disableRelativeRotationAndScale: Bool = false) {
-        self.resulting.translation = translation
-        self.resulting.scale = scale
-        self.resulting.rotation = rotation
-        self.resulting.centerPoint = .zero
         
         self.translationRangeX = translationRangeX
         self.translationRangeY = translationRangeY
         self.rotationRange = rotationRange
         self.scaleRange = scaleRange
-        
-        self.translation = resulting.translation
-        self.scale = resulting.scale
-        self.rotation = -resulting.rotation
         
         self.translationXSnapDistance = translationXSnapDistance
         self.translationYSnapDistance = translationYSnapDistance
@@ -59,65 +52,76 @@ public class TouchTransform: ObservableObject{
         self.scaleSnapDistance = scaleSnapDistance
         
         self.disableRelativeRotationAndScale = disableRelativeRotationAndScale
+        
+        //
+        
+        self.resulting.translation = translation
+        self.resulting.scale = scale
+        self.resulting.rotation = rotation
+        self.resulting.centerPoint = .zero
+        
+        self.translation = resulting.translation
+        self.scale = resulting.scale
+        self.rotation = -resulting.rotation
     }
     
     //Published Dragging Values
     
     /// Indicates whether the view is being touched
-    @Published public var isTouching = false
+    public var isTouching = false
     /// Indicates whether a dragging gesture is performed inside the view.
-    @Published public var isDragging = false
+    public var isDragging = false
     
     /// Coordinates of the first touch in the view.
-    @Published public var firstTouch: CGPoint = .zero
+    public var firstTouch: CGPoint = .zero
     /// Coordinates of the current touch in the view when dragging is performed.
-    @Published public var currentTouch: CGPoint = .zero
+    public var currentTouch: CGPoint = .zero
     /// Coordinates offset when dragging is performed.
-    @Published public var offset: CGSize = .zero
+    public var offset: CGSize = .zero
     
-    @Published public var floatFirstTouch: simd_float2 = [0,0]
-    @Published public var floatCurrentTouch: simd_float2 = [0,0]
-    @Published public var floatOffset: simd_float2 = [0,0]
+    public var floatFirstTouch: simd_float2 = [0,0]
+    public var floatCurrentTouch: simd_float2 = [0,0]
+    public var floatOffset: simd_float2 = [0,0]
     
     //Published Transform Values
     
     /// Indicates whether a transforming with two fingers is performed inside the view.
-    @Published public var isTransforming = false
+    public var isTransforming = false
     
     /// The current transformation matrix.
-    @Published public var matrix = matrix_float3x3()
+    public var matrix = matrix_float3x3()
     /// The current inverse transformation matrix. Use it to find e.g. canvas coordinates of the touched point in the view.
-    @Published public var matrixInveresed = matrix_float3x3()
+    public var matrixInveresed = matrix_float3x3()
     
-    @Published public var translation: CGSize = .zero
-    @Published public var scale: CGFloat = 1
-    @Published public var rotation: CGFloat = 0
+    public var translation: CGSize = .zero
+    public var scale: CGFloat = 1
+    public var rotation: CGFloat = 0
     
     /// The center point between the two fingers that sets the axis for rotation and scaling.
-    @Published public var centerPoint: CGPoint = .zero
+    public var centerPoint: CGPoint = .zero
     
-    @Published public var floatTranslation: simd_float2 = [0,0]
-    @Published public var floatScale: Float = 1
-    @Published public var floatRotation: Float = 0
-    @Published public var floatCenterPoint: simd_float2 = [0,0]
+    public var floatTranslation: simd_float2 = [0,0]
+    public var floatScale: Float = 1
+    public var floatRotation: Float = 0
+    public var floatCenterPoint: simd_float2 = [0,0]
     
     /// Is `true` if the translation along the X axis is currently out of bounds of ``translationRangeX``.
-    @Published public var translationXOutOfBounds = false
+    public var translationXOutOfBounds = false
     /// Is `true` if the translation along the Y axis is currently out of bounds ``translationRangeY``.
-    @Published public var translationYOutOfBounds = false
+    public var translationYOutOfBounds = false
     /// Is `true` if the scaling is currently out of bounds of ``scaleRange``.
-    @Published public var scaleOutOfBounds = false
+    public var scaleOutOfBounds = false
     /// Is `true` if the rotation is currently out of bounds of ``rotationRange``.
-    @Published public var rotationOutOfBounds = false
+    public var rotationOutOfBounds = false
     
     /// Is `true` if the translation along the X axis is currently being snapped.
-    @Published public var translationXSnapped = false
+    public var translationXSnapped = false
     /// Is `true` if the translation along the Y axis is currently being snapped.
-    @Published public var translationYSnapped = false
+    public var translationYSnapped = false
     /// Is `true` if the scaling is currently being snapped.
-    @Published public var scaleSnapped = false
+    public var scaleSnapped = false
     /// Is `true` if the rotation is currently being snapped.
-    @Published public var rotationSnapped = false
+    public var rotationSnapped = false
     
     //Public Properties
     public var translationRangeX: ClosedRange<CGFloat>
@@ -130,6 +134,16 @@ public class TouchTransform: ObservableObject{
     public var scaleSnapDistance: CGFloat
     public var rotationSnapDistance: CGFloat
     public var rotationSnapPeriod: CGFloat
+    
+    public internal(set) var frameSize = CGSize(){
+        didSet{
+            delegate?.onFrameChange(frameSize: frameSize)
+        }
+    }
+    public var valuesUpdated: Bool = false
+    
+    @ObservationIgnored
+    public var delegate: TouchDelegate?
     
     //Private properties
     var current: Transform!
@@ -150,6 +164,37 @@ public extension TouchTransform{
         updatePublishedTransformValues()
         current = nil
     }
+    
+    func setAbsoluteTransform(scale: CGFloat?=nil,
+                              translation: CGSize?=nil,
+                              rotation: CGFloat?=nil){
+        
+        initTransform()
+        if let _ = current{
+            
+//            if let hoverPoint, touchDelegate?.centerOnHover ?? true{
+//                touchTransform._updateCenterPoint(point: hoverPoint)
+//            }
+            
+//            let s = if let scale{ scale/self.scale}else{ CGFloat(1) }
+//            let angle = if let rotation{ rotation-self.rotation }else{ CGFloat.zero }
+//            let translation = if let translation{ CGSize(translation-self.translation) }else{ CGSize.zero }
+            
+            if let scale{ resulting.scale = scale }
+            if let rotation{ resulting.rotation = -rotation }
+            if let translation{
+                current.translation = .zero
+                resulting.translation = translation }
+            resulting.centerPoint = .zero
+//            clampAndSnap(
+//                scale: s,
+//                angle: angle,
+//                translation: translation)
+            updatePublishedTransformValues()
+        }
+        endTransform()
+        
+    }
 }
 
 // Helper Functions
@@ -165,12 +210,14 @@ extension TouchTransform{
         translation = resulting.translation
         scale = resulting.scale
         rotation = -resulting.rotation
-        centerPoint = resulting.centerPoint+current.translation
+        centerPoint = resulting.centerPoint + current.translation
         
         floatTranslation = translation.simd_float2
         floatScale = Float(scale)
         floatRotation = Float(rotation)
         floatCenterPoint = centerPoint.simd_float2
+        
+        valuesUpdated = true
     }
     
     func setFrameSize(_ size: CGSize){
@@ -183,9 +230,16 @@ extension TouchTransform{
         }
     }
     func updateCenterPoint(doubleTouch:  [CGPoint]){
-        self.resulting.centerPoint = median(doubleTouch[0], doubleTouch[1])
-        - centerTranslation
-        
+        let point: CGPoint = median(doubleTouch[0], doubleTouch[1])
+        self._updateCenterPoint(point: point)
+    }
+//    func updateCenterPointFromHover(point: CGPoint){
+//        if self.current != nil{
+//            self._updateCenterPoint(point: point)
+//        }
+//    }
+    func _updateCenterPoint(point: CGPoint){
+        self.resulting.centerPoint = point - centerTranslation
         updatePublishedTransformValues()
     }
 }
@@ -242,7 +296,7 @@ extension TouchTransform{
             
             let currDist = distance(curr[0], curr[1])
             let prevDist = distance(prev[0], prev[1])
-            let scale: CGFloat
+            var scale: CGFloat
             if prevDist>0{
                 scale = currDist/prevDist
             }else{
@@ -255,55 +309,114 @@ extension TouchTransform{
             let v1 = CGPoint(x: curr[0].x-curr[1].x, y: curr[0].y - curr[1].y)
             let v2 = CGPoint(x: prev[0].x-prev[1].x, y: prev[0].y - prev[1].y)
             var angle = atan2(v1.y, v1.x) - atan2(v2.y, v2.x)
-            if angle>CGFloat.pi{
-                angle -= 2*CGFloat.pi
-            }
-            if angle < -CGFloat.pi{
-                angle += 2*CGFloat.pi
-            }
-            var scale1 = previous.scale * current.scale * scale
-            (scale1, scaleOutOfBounds) = scaleRange.clamp(value: scale1)
-            current.scale = scale1/previous.scale
             
-            var angle1 = previous.rotation + current.rotation - angle
-            (angle1, rotationOutOfBounds) = rotationRange.clamp(value: angle1)
-            current.rotation = angle1 - previous.rotation
+            clampAndSnap(scale: scale, angle: angle,
+                         translation: translation)
             
-            var newTranslation: CGSize = previous.translation
-            
-            if !disableRelativeRotationAndScale{
-                var scaleVector: CGPoint = newTranslation - resulting.centerPoint
-                scaleVector = scaleVector * (current.scale-1)
-                newTranslation += scaleVector
-                
-                newTranslation.rotate(center: resulting.centerPoint, angle: current.rotation)
-            }
-            
-            var translation1: CGSize = previous.translation + current.translation + translation
-            (translation1.width, translationXOutOfBounds) = translationRangeX.clamp(value: translation1.width)
-            (translation1.height, translationYOutOfBounds) = translationRangeY.clamp(value: translation1.height)
-            
-            current.translation = translation1 - previous.translation
-            
-            var snappedTranslation: CGSize = newTranslation + current.translation
-            (snappedTranslation.width, translationXSnapped) = snappedTranslation.width.snappedTo(0, distance: translationXSnapDistance)
-            (snappedTranslation.height, translationYSnapped) = snappedTranslation.height.snappedTo(0, distance: translationYSnapDistance)
-            
-            resulting.translation = snappedTranslation
-            
-            var snappedRotation = previous.rotation + current.rotation
-            (snappedRotation, rotationSnapped) = snappedRotation.snappedTo(ratio: rotationSnapPeriod, distance: rotationSnapDistance)
-            
-            resulting.rotation = snappedRotation
-            
-            var snappedScale = previous.scale * current.scale
-            (snappedScale, scaleSnapped) = snappedScale.snappedTo(1, distance: scaleSnapDistance)
-            
-            resulting.scale = snappedScale
+//            if angle>CGFloat.pi{
+//                angle -= 2*CGFloat.pi
+//            }
+//            if angle < -CGFloat.pi{
+//                angle += 2*CGFloat.pi
+//            }
+//            var scale1 = previous.scale * current.scale * scale
+//            (scale1, scaleOutOfBounds) = scaleRange.clamp(value: scale1)
+//            current.scale = scale1/previous.scale
+//            
+//            var angle1 = previous.rotation + current.rotation - angle
+//            (angle1, rotationOutOfBounds) = rotationRange.clamp(value: angle1)
+//            current.rotation = angle1 - previous.rotation
+//            
+//            var newTranslation: CGSize = previous.translation
+//            
+//            if !disableRelativeRotationAndScale{
+//                var scaleVector: CGPoint = newTranslation - resulting.centerPoint
+//                scaleVector = scaleVector * (current.scale-1)
+//                newTranslation += scaleVector
+//                
+//                newTranslation.rotate(center: resulting.centerPoint, angle: current.rotation)
+//            }
+//            
+//            var translation1: CGSize = previous.translation + current.translation + translation
+//            (translation1.width, translationXOutOfBounds) = translationRangeX.clamp(value: translation1.width)
+//            (translation1.height, translationYOutOfBounds) = translationRangeY.clamp(value: translation1.height)
+//            
+//            current.translation = translation1 - previous.translation
+//            
+//            var snappedTranslation: CGSize = newTranslation + current.translation
+//            (snappedTranslation.width, translationXSnapped) = snappedTranslation.width.snappedTo(0, distance: translationXSnapDistance)
+//            (snappedTranslation.height, translationYSnapped) = snappedTranslation.height.snappedTo(0, distance: translationYSnapDistance)
+//            
+//            resulting.translation = snappedTranslation
+//            
+//            var snappedRotation = previous.rotation + current.rotation
+//            (snappedRotation, rotationSnapped) = snappedRotation.snappedTo(ratio: rotationSnapPeriod, distance: rotationSnapDistance)
+//            
+//            resulting.rotation = snappedRotation
+//            
+//            var snappedScale = previous.scale * current.scale
+//            (snappedScale, scaleSnapped) = snappedScale.snappedTo(1, distance: scaleSnapDistance)
+//            
+//            resulting.scale = snappedScale
             
         }else{
             resulting.centerPoint = curr[0]
         }
         updatePublishedTransformValues()
+    }
+    
+    func clampAndSnap(scale: CGFloat, angle: CGFloat, translation: CGSize){
+        
+//        var angle = angle
+//        var scale = scale
+//        var translation = translation
+        
+        var scale = previous.scale * current.scale * scale
+        var angle = previous.rotation + current.rotation - angle
+        var translation: CGSize = previous.translation + current.translation + translation
+        
+        if angle>CGFloat.pi{
+            angle -= 2*CGFloat.pi
+        }
+        if angle < -CGFloat.pi{
+            angle += 2*CGFloat.pi
+        }
+        
+        (scale, scaleOutOfBounds) = scaleRange.clamp(value: scale)
+        current.scale = scale/previous.scale
+        
+        (angle, rotationOutOfBounds) = rotationRange.clamp(value: angle)
+        current.rotation = angle - previous.rotation
+        
+        var newTranslation: CGSize = previous.translation
+        
+        if !disableRelativeRotationAndScale{
+            var scaleVector: CGPoint = newTranslation - resulting.centerPoint
+            scaleVector = scaleVector * (current.scale-1)
+            newTranslation += scaleVector
+            
+            newTranslation.rotate(center: resulting.centerPoint, angle: current.rotation)
+        }
+        
+        (translation.width, translationXOutOfBounds) = translationRangeX.clamp(value: translation.width)
+        (translation.height, translationYOutOfBounds) = translationRangeY.clamp(value: translation.height)
+        
+        current.translation = translation - previous.translation
+        
+        var snappedTranslation: CGSize = newTranslation + current.translation
+        (snappedTranslation.width, translationXSnapped) = snappedTranslation.width.snappedTo(0, distance: translationXSnapDistance)
+        (snappedTranslation.height, translationYSnapped) = snappedTranslation.height.snappedTo(0, distance: translationYSnapDistance)
+        
+        resulting.translation = snappedTranslation
+        
+        var snappedRotation = previous.rotation + current.rotation
+        (snappedRotation, rotationSnapped) = snappedRotation.snappedTo(ratio: rotationSnapPeriod, distance: rotationSnapDistance)
+        
+        resulting.rotation = snappedRotation
+        
+        var snappedScale = previous.scale * current.scale
+        (snappedScale, scaleSnapped) = snappedScale.snappedTo(1, distance: scaleSnapDistance)
+        
+        resulting.scale = snappedScale
     }
 }

@@ -48,7 +48,7 @@ struct ContentView: View {
     @MetalState var particlesCountState = particlesCount
     @MetalState var canvasSizeState = canvasSize
     
-    @StateObject var transform = TouchTransform(
+    @State var transform = TouchTransform(
         translation: CGSize(width: 0,
                             height:0),
         scale: 1,
@@ -97,7 +97,7 @@ struct ContentView: View {
                 Rectangle()
                     .fill(Color.gray)
                     .frame(width: CGFloat(canvasSize.x), height: CGFloat(canvasSize.y))
-                    .transformEffect(transform)
+                    .transformEffect($transform)
                 MetalBuilderView(viewSettings: viewSettings) { context in
                     EncodeGroup(active: $justStarted){
                         ClearRender()
@@ -242,7 +242,7 @@ struct ContentView: View {
                         .fill(Color.clear)
                         .border(Color.white, width: transform.scaleSnapped ? 2 : 1)
                         .frame(width: CGFloat(canvasSize.x), height: CGFloat(canvasSize.y))
-                        .transformEffect(transform)
+                        .transformEffect($transform)
                     let offset = CGSize(width: transform.centerPoint.x,
                                         height: transform.centerPoint.y)
                     ZStack{
