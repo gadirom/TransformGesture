@@ -1,7 +1,7 @@
 import SwiftUI
 import MetalKit
 
-public extension matrix_float3x3{
+extension matrix_float3x3{
     static var identity: Self{
         matrix_float3x3(diagonal: [1,1,1])
     }
